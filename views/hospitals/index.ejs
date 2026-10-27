@@ -1,0 +1,113 @@
+<%- include('../partials/header') %>
+
+<div class="app-container">
+  <%- include('../partials/sidebar') %>
+
+  <main class="main-wrapper">
+    <header class="top-header">
+      <div class="page-title">
+        <h2>Partner Hospitals & Medical Facilities</h2>
+        <p>Maintain authorized recipient institutions for clinical blood distribution</p>
+      </div>
+      <div class="header-actions">
+        <a href="/hospitals/new" class="btn btn-primary btn-sm">+ Add Partner Hospital</a>
+      </div>
+    </header>
+
+    <div class="content-body">
+      <%- include('../partials/safety_banner') %>
+      <%- include('../partials/flash') %>
+
+      <!-- Filter bar -->
+      <form action="/hospitals" method="GET" class="filter-bar">
+        <input 
+          type="text" 
+          name="q" 
+          class="form-control search-input" 
+          placeholder="🔍 Search hospital by name, code (e.g. HSP-001), city, contact person..." 
+          value="<%= q %>"
+          data-table-search="hospitals-table"
+        >
+        <button type="submit" class="btn btn-navy btn-sm">Filter</button>
+        <% if (q) { %>
+          <a href="/hospitals" class="btn btn-secondary btn-sm">Reset</a>
+        <% } %>
+      </form>
+
+      <!-- Hospitals Table -->
+      <div class="card">
+        <div class="card-header">
+          <h3>🏥 Hospitals Directory (<%= hospitals.length %> Records)</h3>
+          <span style="font-size: 0.8rem; color: var(--text-muted);">
+            Referential integrity enforced via MySQL foreign keys
+          </span>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table" id="hospitals-table">
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Hospital Name</th>
+                <th>Contact Person</th>
+                <th>City</th>
+                <th>Address</th>
+                <th>Phone / Email</th>
+                <th>Linked Requests</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (hospitals.length === 0) { %>
+                <tr>
+                  <td colspan="8">
+                    <div class="empty-state">
+                      <div class="empty-state-icon">🏥</div>
+                      <h4>No Hospitals Found</h4>
+                      <p>No hospital records matched your filter criteria.</p>
+                      <a href="/hospitals/new" class="btn btn-primary btn-sm">+ Register Hospital</a>
+                    </div>
+                  </td>
+                </tr>
+              <% } else { %>
+                <% hospitals.forEach(h => { %>
+                  <tr>
+                    <td><strong><%= h.hospital_code %></strong></td>
+                    <td>
+                      <span style="font-weight: 600; color: var(--navy);"><%= h.hospital_name %></span>
+                    </td>
+                    <td><%= h.contact_person %></td>
+                    <td><%= h.city %></td>
+                    <td style="max-width: 200px; font-size: 0.8rem; color: var(--text-muted);"><%= h.address || 'N/A' %></td>
+                    <td>
+                      <div style="font-size: 0.8rem;">
+                        <div>📞 <%= h.phone || 'N/A' %></div>
+                        <div>✉️ <%= h.email || 'N/A' %></div>
+                      </div>
+                    </td>
+                    <td>
+                      <a href="/requests?hospital_id=<%= h.hospital_id %>" class="badge badge-<%= h.total_requests > 0 ? 'blue' : 'gray' %>" style="text-decoration: none;">
+                        <%= h.total_requests %> request(s)
+                      </a>
+                    </td>
+                    <td>
+                      <div style="display: flex; gap: 0.35rem; align-items: center;">
+                        <a href="/hospitals/<%= h.hospital_id %>/edit" class="btn btn-secondary btn-sm">Edit</a>
+                        
+                        <% if (typeof user !== 'undefined' && user && user.role === 'ADMIN') { %>
+                          <form action="/hospitals/<%= h.hospital_id %>/delete" method="POST" style="margin: 0;" data-confirm="Are you sure you want to delete <%= h.hospital_name %> (<%= h.hospital_code %>)? If requests exist, deletion will be blocked to maintain referential integrity.">
+                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                            <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
+                          </form>
+                        <% } %>
+                      </div>
+                    </td>
+                  </tr>
+                <% }) %>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+<%- include('../partials/footer') %>

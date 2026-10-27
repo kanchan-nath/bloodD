@@ -1,0 +1,126 @@
+<%- include('../partials/header') %>
+
+<div class="app-container">
+  <%- include('../partials/sidebar') %>
+
+  <main class="main-wrapper">
+    <header class="top-header">
+      <div class="page-title">
+        <h2>Registered Blood Donors</h2>
+        <p>Manage and query registered volunteer donors with live SQL search</p>
+      </div>
+      <div class="header-actions">
+        <a href="/donors/new" class="btn btn-primary btn-sm">+ Register New Donor</a>
+      </div>
+    </header>
+
+    <div class="content-body">
+      <%- include('../partials/safety_banner') %>
+      <%- include('../partials/flash') %>
+
+      <!-- Search & Filter Controls -->
+      <form action="/donors" method="GET" class="filter-bar">
+        <input 
+          type="text" 
+          name="q" 
+          class="form-control search-input" 
+          placeholder="🔍 Search by donor name, code (e.g. DNR-0001), city, phone..." 
+          value="<%= q %>"
+          data-table-search="donors-table"
+        >
+
+        <select name="blood_group" class="form-control" style="width: auto; min-width: 160px;" onchange="this.form.submit()">
+          <option value="">All Blood Groups</option>
+          <% validBloodGroups.forEach(bg => { %>
+            <option value="<%= bg %>" <%= selectedBloodGroup === bg ? 'selected' : '' %>><%= bg %></option>
+          <% }) %>
+        </select>
+
+        <button type="submit" class="btn btn-navy btn-sm">Filter</button>
+        <% if (q || selectedBloodGroup) { %>
+          <a href="/donors" class="btn btn-secondary btn-sm">Reset</a>
+        <% } %>
+      </form>
+
+      <!-- Donors Data Table -->
+      <div class="card">
+        <div class="card-header">
+          <h3>👥 Donors List (<%= donors.length %> Results)</h3>
+          <span style="font-size: 0.8rem; color: var(--text-muted);">
+            Table features server-side SQL filters & instant client typing search
+          </span>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table" id="donors-table">
+            <thead>
+              <tr>
+                <th>Donor Code</th>
+                <th>Full Name</th>
+                <th>Blood Group</th>
+                <th>Gender</th>
+                <th>Birth Date</th>
+                <th>City</th>
+                <th>Contact</th>
+                <th>Donations</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (donors.length === 0) { %>
+                <tr>
+                  <td colspan="9">
+                    <div class="empty-state">
+                      <div class="empty-state-icon">🔍</div>
+                      <h4>No Donors Found</h4>
+                      <p>No donor records matched your search query. Try clearing the filter or registering a new donor.</p>
+                      <a href="/donors/new" class="btn btn-primary btn-sm">+ Register Donor</a>
+                    </div>
+                  </td>
+                </tr>
+              <% } else { %>
+                <% donors.forEach(d => { %>
+                  <tr>
+                    <td><strong><%= d.donor_code %></strong></td>
+                    <td>
+                      <a href="/donors/<%= d.donor_id %>" style="color: var(--navy); font-weight: 600; text-decoration: none;">
+                        <%= d.full_name %>
+                      </a>
+                    </td>
+                    <td><span class="blood-badge"><%= d.blood_group %></span></td>
+                    <td><%= d.gender %></td>
+                    <td><%= d.date_of_birth %></td>
+                    <td><%= d.city %></td>
+                    <td>
+                      <div style="font-size: 0.8rem;">
+                        <div>📞 <%= d.phone || 'N/A' %></div>
+                        <div>✉️ <%= d.email || 'N/A' %></div>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="badge badge-<%= d.total_donations > 0 ? 'green' : 'gray' %>">
+                        <%= d.total_donations %> donation(s)
+                      </span>
+                    </td>
+                    <td>
+                      <div style="display: flex; gap: 0.35rem; align-items: center;">
+                        <a href="/donors/<%= d.donor_id %>" class="btn btn-secondary btn-sm" title="View Profile">View</a>
+                        <a href="/donors/<%= d.donor_id %>/edit" class="btn btn-secondary btn-sm" title="Edit Donor">Edit</a>
+                        
+                        <% if (typeof user !== 'undefined' && user && user.role === 'ADMIN') { %>
+                          <form action="/donors/<%= d.donor_id %>/delete" method="POST" style="margin: 0;" data-confirm="Are you sure you want to delete donor <%= d.full_name %> (<%= d.donor_code %>)? If donations exist, deletion will be safely rejected.">
+                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete Donor">Delete</button>
+                          </form>
+                        <% } %>
+                      </div>
+                    </td>
+                  </tr>
+                <% }) %>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+<%- include('../partials/footer') %>

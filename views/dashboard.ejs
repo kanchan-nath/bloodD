@@ -1,0 +1,248 @@
+<%- include('partials/header') %>
+
+<div class="app-container">
+  <%- include('partials/sidebar') %>
+
+  <main class="main-wrapper">
+    <header class="top-header">
+      <div class="page-title">
+        <h2>Dashboard & Blood Inventory Overview</h2>
+        <p>Live operational statistics calculated dynamically from MySQL 8</p>
+      </div>
+      <div class="header-actions">
+        <a href="/donations/new" class="btn btn-primary btn-sm">+ Record Donation</a>
+        <a href="/requests/new" class="btn btn-secondary btn-sm">+ New Request</a>
+      </div>
+    </header>
+
+    <div class="content-body">
+      <%- include('partials/safety_banner') %>
+      <%- include('partials/flash') %>
+
+      <!-- High-Level Metric Cards -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon blue">👥</div>
+          <div class="stat-data">
+            <div class="stat-number"><%= stats.totalDonors %></div>
+            <div class="stat-label">Total Registered Donors</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon red">🩸</div>
+          <div class="stat-data">
+            <div class="stat-number"><%= stats.totalAvailableUnits %></div>
+            <div class="stat-label">Available Whole Blood Units</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon amber">🧪</div>
+          <div class="stat-data">
+            <div class="stat-number"><%= stats.pendingDonations %></div>
+            <div class="stat-label">Donations Awaiting Screening</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon navy">📋</div>
+          <div class="stat-data">
+            <div class="stat-number"><%= stats.pendingRequests %></div>
+            <div class="stat-label">Pending Hospital Requests</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon red">🚨</div>
+          <div class="stat-data">
+            <div class="stat-number"><%= stats.emergencyRequests %></div>
+            <div class="stat-label">Emergency Urgency Requests</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon amber">⏳</div>
+          <div class="stat-data">
+            <div class="stat-number"><%= stats.expiringSoon %></div>
+            <div class="stat-label">Batches Expiring in &le;14 Days</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Blood Group Stock Grid -->
+      <div class="card">
+        <div class="card-header">
+          <h3>🩸 Available Stock by Blood Group (View: <code>v_current_blood_stock</code>)</h3>
+          <a href="/inventory" class="btn btn-secondary btn-sm">View Full Inventory &rarr;</a>
+        </div>
+        <div class="card-body">
+          <div class="stock-grid">
+            <% Object.keys(stockMap).forEach(bg => { %>
+              <div class="stock-pill <%= stockMap[bg] < 2 ? 'low-stock' : '' %>">
+                <div class="blood-type"><%= bg %></div>
+                <div class="units-count"><%= stockMap[bg] %></div>
+                <div class="units-label"><%= stockMap[bg] === 1 ? 'Unit Available' : 'Units Available' %></div>
+                <% if (stockMap[bg] === 0) { %>
+                  <span class="badge badge-red" style="margin-top: 0.5rem; font-size: 0.65rem;">Critical 0</span>
+                <% } else if (stockMap[bg] < 2) { %>
+                  <span class="badge badge-amber" style="margin-top: 0.5rem; font-size: 0.65rem;">Low Stock</span>
+                <% } else { %>
+                  <span class="badge badge-green" style="margin-top: 0.5rem; font-size: 0.65rem;">Sufficient</span>
+                <% } %>
+              </div>
+            <% }) %>
+          </div>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">
+            * Stock totals strictly exclude expired, quarantined, empty, and discarded batches per DBMS view rules.
+          </p>
+        </div>
+      </div>
+
+      <!-- Near Expiry Warning Banner if Any -->
+      <% if (expiringBatches && expiringBatches.length > 0) { %>
+        <div class="card" style="border-left: 4px solid var(--warning);">
+          <div class="card-header" style="background-color: #fffbeb;">
+            <h3 style="color: #92400e;">⚠️ Urgent: Batches Expiring in &le; 14 Days</h3>
+            <span class="badge badge-amber"><%= expiringBatches.length %> Tracked Batches</span>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Batch Code</th>
+                  <th>Blood Group</th>
+                  <th>Available Units</th>
+                  <th>Expiry Date</th>
+                  <th>Days Remaining</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% expiringBatches.forEach(b => { %>
+                  <tr>
+                    <td><strong><%= b.batch_code %></strong></td>
+                    <td><span class="blood-badge"><%= b.blood_group %></span></td>
+                    <td><%= b.units_available %> unit(s)</td>
+                    <td><%= b.expiry_date %></td>
+                    <td>
+                      <span class="badge badge-red">
+                        <%= b.days_left <= 0 ? 'Expires Today' : b.days_left + ' days left' %>
+                      </span>
+                    </td>
+                    <td>
+                      <a href="/inventory?blood_group=<%= encodeURIComponent(b.blood_group) %>" class="btn btn-secondary btn-sm">Inspect Batch</a>
+                    </td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      <% } %>
+
+      <!-- Recent Donations & Requests side-by-side -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem;">
+        <!-- Recent Donations -->
+        <div class="card">
+          <div class="card-header">
+            <h3>🧪 Recent Donations</h3>
+            <a href="/donations" class="btn btn-secondary btn-sm">All Donations</a>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Code</th>
+                  <th>Donor</th>
+                  <th>Group</th>
+                  <th>Date</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (recentDonations.length === 0) { %>
+                  <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No donations recorded yet.</td></tr>
+                <% } else { %>
+                  <% recentDonations.forEach(d => { %>
+                    <tr>
+                      <td><a href="/donations" style="color: var(--primary); font-weight: 600; text-decoration: none;"><%= d.donation_code %></a></td>
+                      <td><%= d.donor_name %></td>
+                      <td><span class="blood-badge"><%= d.blood_group %></span></td>
+                      <td><%= d.donation_date %></td>
+                      <td>
+                        <% if (d.screening_status === 'CLEARED') { %>
+                          <span class="badge badge-green">CLEARED</span>
+                        <% } else if (d.screening_status === 'PENDING') { %>
+                          <span class="badge badge-amber">PENDING</span>
+                        <% } else if (d.screening_status === 'DEFERRED') { %>
+                          <span class="badge badge-gray">DEFERRED</span>
+                        <% } else { %>
+                          <span class="badge badge-red"><%= d.screening_status %></span>
+                        <% } %>
+                      </td>
+                    </tr>
+                  <% }) %>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Recent Hospital Requests -->
+        <div class="card">
+          <div class="card-header">
+            <h3>📋 Recent Hospital Requests</h3>
+            <a href="/requests" class="btn btn-secondary btn-sm">All Requests</a>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Code</th>
+                  <th>Hospital</th>
+                  <th>Group</th>
+                  <th>Urgency</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (recentRequests.length === 0) { %>
+                  <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No requests recorded yet.</td></tr>
+                <% } else { %>
+                  <% recentRequests.forEach(r => { %>
+                    <tr>
+                      <td><a href="/requests" style="color: var(--navy); font-weight: 600; text-decoration: none;"><%= r.request_code %></a></td>
+                      <td><%= r.hospital_name %></td>
+                      <td><span class="blood-badge"><%= r.blood_group %></span></td>
+                      <td>
+                        <% if (r.urgency === 'EMERGENCY') { %>
+                          <span class="badge badge-red">EMERGENCY</span>
+                        <% } else if (r.urgency === 'URGENT') { %>
+                          <span class="badge badge-amber">URGENT</span>
+                        <% } else { %>
+                          <span class="badge badge-blue">ROUTINE</span>
+                        <% } %>
+                      </td>
+                      <td>
+                        <% if (r.status === 'FULFILLED') { %>
+                          <span class="badge badge-green">FULFILLED</span>
+                        <% } else if (r.status === 'APPROVED') { %>
+                          <span class="badge badge-blue">APPROVED</span>
+                        <% } else if (r.status === 'PENDING') { %>
+                          <span class="badge badge-amber">PENDING</span>
+                        <% } else { %>
+                          <span class="badge badge-gray"><%= r.status %></span>
+                        <% } %>
+                      </td>
+                    </tr>
+                  <% }) %>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+<%- include('partials/footer') %>

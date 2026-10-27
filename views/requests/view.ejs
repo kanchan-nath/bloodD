@@ -1,0 +1,261 @@
+<%- include('../partials/header') %>
+
+<div class="app-container">
+  <%- include('../partials/sidebar') %>
+
+  <main class="main-wrapper">
+    <header class="top-header">
+      <div class="page-title">
+        <h2>Requisition Details: <%= request.request_code %></h2>
+        <p>Hospital requisition review, stock verification, and transactional fulfillment</p>
+      </div>
+      <div class="header-actions">
+        <a href="/requests" class="btn btn-secondary btn-sm">&larr; Back to Requests</a>
+      </div>
+    </header>
+
+    <div class="content-body">
+      <%- include('../partials/safety_banner') %>
+      <%- include('../partials/flash') %>
+
+      <!-- Top Request Summary -->
+      <div class="card" style="margin-bottom: 1.5rem;">
+        <div class="card-header">
+          <h3>
+            📋 <%= request.request_code %> &bull; <%= request.hospital_name %>
+          </h3>
+          <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <span class="blood-badge" style="font-size: 1rem;"><%= request.blood_group %></span>
+            <% if (request.urgency === 'EMERGENCY') { %>
+              <span class="badge badge-red">🚨 EMERGENCY</span>
+            <% } else if (request.urgency === 'URGENT') { %>
+              <span class="badge badge-amber">⚡ URGENT</span>
+            <% } else { %>
+              <span class="badge badge-blue">ROUTINE</span>
+            <% } %>
+            
+            <% if (request.status === 'FULFILLED') { %>
+              <span class="badge badge-green">FULFILLED</span>
+            <% } else if (request.status === 'APPROVED') { %>
+              <span class="badge badge-blue">APPROVED</span>
+            <% } else if (request.status === 'PENDING') { %>
+              <span class="badge badge-amber">PENDING REVIEW</span>
+            <% } else if (request.status === 'REJECTED') { %>
+              <span class="badge badge-red">REJECTED</span>
+            <% } else { %>
+              <span class="badge badge-gray"><%= request.status %></span>
+            <% } %>
+          </div>
+        </div>
+        <div class="card-body">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
+            <div>
+              <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Hospital:</span>
+              <div style="font-weight: 700; color: var(--navy);"><%= request.hospital_name %> (<%= request.hospital_code %>)</div>
+              <div style="font-size: 0.8rem; color: var(--text-muted);"><%= request.hospital_city %> &bull; <%= request.contact_person %></div>
+            </div>
+            <div>
+              <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Units Requested:</span>
+              <div style="font-weight: 700; font-size: 1.1rem;"><%= request.units_requested %> unit(s)</div>
+            </div>
+            <div>
+              <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Required By Date:</span>
+              <div><%= request.required_by || 'Not Specified' %></div>
+            </div>
+            <div>
+              <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Patient Reference:</span>
+              <div><%= request.patient_reference || 'N/A' %></div>
+            </div>
+            <div>
+              <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Requisition Time:</span>
+              <div style="font-size: 0.85rem;"><%= request.requested_at %></div>
+            </div>
+            <div>
+              <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Created By:</span>
+              <div><%= request.created_by_name %></div>
+            </div>
+            <div>
+              <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Handled By:</span>
+              <div><%= request.handled_by_name || 'Pending Review' %></div>
+            </div>
+            <div>
+              <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Notes:</span>
+              <div style="font-size: 0.85rem;"><%= request.notes || 'None' %></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Stock & Action Section -->
+      <div class="card" style="margin-bottom: 1.5rem; border: 2px solid <%= availableStock >= request.units_requested ? '#86efac' : '#fca5a5' %>;">
+        <div class="card-header" style="background-color: <%= availableStock >= request.units_requested ? '#f0fdf4' : '#fff5f5' %>;">
+          <h3 style="color: <%= availableStock >= request.units_requested ? '#166534' : '#991b1b' %>;">
+            🩸 Live Inventory Availability for <%= request.blood_group %>
+          </h3>
+          <span class="badge <%= availableStock >= request.units_requested ? 'badge-green' : 'badge-red' %>" style="font-size: 0.85rem;">
+            <%= availableStock %> Ready Unit(s) in Inventory
+          </span>
+        </div>
+        <div class="card-body">
+          <p style="margin-bottom: 1rem; font-size: 0.9rem;">
+            This requisition demands <strong><%= request.units_requested %> unit(s)</strong> of blood group <span class="blood-badge"><%= request.blood_group %></span>. 
+            Currently, there are <strong><%= availableStock %> unit(s)</strong> of eligible, non-expired, cleared whole blood available.
+          </p>
+
+          <!-- Status Action Buttons -->
+          <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center;">
+            <% if (request.status === 'PENDING') { %>
+              <!-- Approval Form -->
+              <form action="/requests/<%= request.request_id %>/status" method="POST" style="margin: 0;">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="new_status" value="APPROVED">
+                <button type="submit" class="btn btn-primary">
+                  ✅ Approve Requisition
+                </button>
+              </form>
+
+              <!-- Rejection Form -->
+              <form action="/requests/<%= request.request_id %>/status" method="POST" style="margin: 0;" data-confirm="Are you sure you want to reject this requisition?">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="new_status" value="REJECTED">
+                <button type="submit" class="btn btn-outline-danger">
+                  ❌ Reject Requisition
+                </button>
+              </form>
+            <% } else if (request.status === 'APPROVED') { %>
+              <% if (availableStock >= request.units_requested) { %>
+                <!-- Transactional Issue Button -->
+                <form action="/requests/<%= request.request_id %>/issue" method="POST" style="margin: 0;" data-confirm="Execute transactional stock fulfillment? This will atomically lock the earliest-expiring inventory batches, decrement stock, insert blood_issues and stock_movements records, and mark request as FULFILLED.">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button type="submit" class="btn btn-success" style="padding: 0.75rem 1.5rem; font-weight: 700; font-size: 1rem;">
+                    ⚡ Issue Stock &amp; Fulfill Request (Atomic MySQL Transaction)
+                  </button>
+                </form>
+              <% } else { %>
+                <div class="alert alert-error" style="margin: 0; width: 100%;">
+                  <span>⚠️ Cannot fulfill: Insufficient stock available. Need <%= request.units_requested %> unit(s) of <%= request.blood_group %>, but only <%= availableStock %> unit(s) are in stock. Please record and clear new donor collections.</span>
+                </div>
+              <% } %>
+
+              <!-- Cancel Option -->
+              <form action="/requests/<%= request.request_id %>/status" method="POST" style="margin: 0;" data-confirm="Cancel this approved requisition?">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="new_status" value="CANCELLED">
+                <button type="submit" class="btn btn-secondary btn-sm">
+                  Cancel Request
+                </button>
+              </form>
+            <% } else if (request.status === 'FULFILLED') { %>
+              <div class="badge badge-green" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
+                ✅ Request Fully Dispatched &amp; Completed
+              </div>
+            <% } else { %>
+              <div class="badge badge-gray" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
+                Status: <%= request.status %> (Closed)
+              </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fulfilled Issues Records (if any) -->
+      <% if (issues && issues.length > 0) { %>
+        <div class="card" style="margin-bottom: 1.5rem;">
+          <div class="card-header">
+            <h3>📦 Blood Units Dispatched Against This Request (Table: <code>blood_issues</code>)</h3>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Issue Code</th>
+                  <th>Batch Code</th>
+                  <th>Blood Group</th>
+                  <th>Units Issued</th>
+                  <th>Dispatch Time</th>
+                  <th>Issued By</th>
+                  <th>Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% issues.forEach(iss => { %>
+                  <tr>
+                    <td><strong><%= iss.issue_code %></strong></td>
+                    <td>
+                      <a href="/inventory/batch/<%= iss.batch_id %>" style="color: var(--primary); font-weight: 600;">
+                        <%= iss.batch_code %>
+                      </a>
+                    </td>
+                    <td><span class="blood-badge"><%= iss.blood_group %></span></td>
+                    <td><strong><%= iss.units_issued %> unit(s)</strong></td>
+                    <td><%= iss.issued_at %></td>
+                    <td><%= iss.issued_by_name %></td>
+                    <td style="font-size: 0.8rem;"><%= iss.notes || '-' %></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      <% } %>
+
+      <!-- FIFO Candidate Batches Table -->
+      <div class="card">
+        <div class="card-header">
+          <h3>🎯 FIFO Allocation Queue (Earliest Expiration First)</h3>
+          <span style="font-size: 0.8rem; color: var(--text-muted);">
+            MySQL query: <code>ORDER BY expiry_date ASC, batch_id ASC FOR UPDATE</code>
+          </span>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Priority Order</th>
+                <th>Batch Code</th>
+                <th>Blood Group</th>
+                <th>Units Available</th>
+                <th>Collection Date</th>
+                <th>Expiry Date</th>
+                <th>Days Remaining</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (eligibleBatches.length === 0) { %>
+                <tr>
+                  <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                    No eligible active batches found for blood group <%= request.blood_group %>.
+                  </td>
+                </tr>
+              <% } else { %>
+                <% eligibleBatches.forEach((eb, idx) => { %>
+                  <tr>
+                    <td>
+                      <span class="badge <%= idx === 0 ? 'badge-green' : 'badge-gray' %>">
+                        #<%= idx + 1 %> <%= idx === 0 ? '(Next in Queue)' : '' %>
+                      </span>
+                    </td>
+                    <td><strong><%= eb.batch_code %></strong></td>
+                    <td><span class="blood-badge"><%= eb.blood_group %></span></td>
+                    <td><strong><%= eb.units_available %> unit(s)</strong></td>
+                    <td><%= eb.collection_date %></td>
+                    <td><%= eb.expiry_date %></td>
+                    <td>
+                      <span class="badge <%= eb.days_left <= 7 ? 'badge-red' : (eb.days_left <= 14 ? 'badge-amber' : 'badge-green') %>">
+                        <%= eb.days_left %> days left
+                      </span>
+                    </td>
+                    <td>
+                      <a href="/inventory/batch/<%= eb.batch_id %>" class="btn btn-secondary btn-sm">Inspect Batch</a>
+                    </td>
+                  </tr>
+                <% }) %>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+<%- include('../partials/footer') %>

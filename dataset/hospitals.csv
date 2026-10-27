@@ -1,0 +1,7 @@
+hospital_id,hospital_code,hospital_name,contact_person,phone,email,city,address
+1,HSP-001,Durgapur Community Hospital,Demo Contact A,0000001001,contact1@example.test,Durgapur,"Demo Road 1, Durgapur"
+2,HSP-002,City Care Medical Centre,Demo Contact B,0000001002,contact2@example.test,Asansol,"Demo Avenue 2, Asansol"
+3,HSP-003,Green Valley Hospital,Demo Contact C,0000001003,contact3@example.test,Durgapur,"Sample Street 3, Durgapur"
+4,HSP-004,Eastern Diagnostic and Care,Demo Contact D,0000001004,contact4@example.test,Bardhaman,"Demo Lane 4, Bardhaman"
+5,HSP-005,Unity General Hospital,Demo Contact E,0000001005,contact5@example.test,Kolkata,"Training Boulevard 5, Kolkata"
+6,HSP-006,Sunrise Medical Institute,Demo Contact F,0000001006,contact6@example.test,Siliguri,"Sample Park 6, Siliguri"

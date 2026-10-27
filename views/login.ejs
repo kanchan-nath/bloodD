@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In | Blood Bank Management System</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="login-body">
+  <div class="login-card">
+    <div class="login-header">
+      <div class="login-logo">🩸</div>
+      <h2>Blood Bank System</h2>
+      <p>College DBMS Demonstration Portal</p>
+    </div>
+
+    <div class="login-body-content">
+      <% if (typeof flashError !== 'undefined' && flashError.length > 0) { %>
+        <% flashError.forEach(msg => { %>
+          <div class="alert alert-error">
+            <span>⚠️ <%= msg %></span>
+            <button type="button" class="alert-close">&times;</button>
+          </div>
+        <% }) %>
+      <% } %>
+
+      <% if (typeof flashSuccess !== 'undefined' && flashSuccess.length > 0) { %>
+        <% flashSuccess.forEach(msg => { %>
+          <div class="alert alert-success">
+            <span>✅ <%= msg %></span>
+            <button type="button" class="alert-close">&times;</button>
+          </div>
+        <% }) %>
+      <% } %>
+
+      <form action="/login" method="POST">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+          <label for="username">Username</label>
+          <input type="text" id="username" name="username" class="form-control" placeholder="e.g. admin or staff" required autofocus autocomplete="username">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" class="form-control" placeholder="••••••••••••" required autocomplete="current-password">
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-size: 1rem;">
+          Sign In to Dashboard
+        </button>
+      </form>
+
+      <div class="demo-credentials-box">
+        <h5>Demo Accounts (Academic Seed):</h5>
+        <div class="demo-row">
+          <span>Admin Role:</span>
+          <div>
+            <code>admin</code> / <code>Admin@123</code>
+            <a href="#" data-fill-demo="admin" style="margin-left: 6px; font-size: 0.75rem; color: var(--primary);">[Auto-fill]</a>
+          </div>
+        </div>
+        <div class="demo-row">
+          <span>Staff Role:</span>
+          <div>
+            <code>staff</code> / <code>Staff@123</code>
+            <a href="#" data-fill-demo="staff" style="margin-left: 6px; font-size: 0.75rem; color: var(--primary);">[Auto-fill]</a>
+          </div>
+        </div>
+        <p style="margin-top: 0.5rem; font-size: 0.7rem; color: var(--text-muted);">
+          Passwords are automatically verified against stored PBKDF2:SHA256 hashes using Node's native crypto engine.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/main.js"></script>
+</body>
+</html>

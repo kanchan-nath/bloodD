@@ -1,0 +1,33 @@
+donation_id,donation_code,donor_id,donation_date,units_collected,screening_status,screened_by,created_by,notes,created_at
+1,DON-2026-0001,1,2026-09-17,1,CLEARED,1,1,Demo record: screening marked cleared for UI testing.,2026-09-17 11:00:00
+2,DON-2026-0002,2,2026-09-24,1,CLEARED,1,1,Demo record: screening marked cleared for UI testing.,2026-09-24 11:00:00
+3,DON-2026-0003,3,2026-10-20,1,CLEARED,1,1,Demo record: screening marked cleared for UI testing.,2026-10-20 11:00:00
+4,DON-2026-0004,4,2026-10-26,1,PENDING,,1,Demo record: screening is pending.,2026-10-26 11:00:00
+5,DON-2026-0005,5,2026-09-17,1,CLEARED,1,1,Demo record: screening marked cleared for UI testing.,2026-09-17 11:00:00
+6,DON-2026-0006,6,2026-09-24,1,CLEARED,1,1,Demo record: screening marked cleared for UI testing.,2026-09-24 11:00:00
+7,DON-2026-0007,7,2026-10-20,1,CLEARED,1,1,Demo record: screening marked cleared for UI testing.,2026-10-20 11:00:00
+8,DON-2026-0008,8,2026-10-26,1,DEFERRED,1,1,Demo record: donor deferred in this sample dataset.,2026-10-26 11:00:00
+9,DON-2026-0009,9,2026-09-17,1,CLEARED,1,1,Demo record: screening marked cleared for UI testing.,2026-09-17 11:00:00
+10,DON-2026-0010,10,2026-09-24,1,CLEARED,1,1,Demo record: screening marked cleared for UI testing.,2026-09-24 11:00:00
+11,DON-2026-0011,11,2026-10-20,1,CLEARED,1,1,Demo record: screening marked cleared for UI testing.,2026-10-20 11:00:00
+12,DON-2026-0012,12,2026-10-26,1,REJECTED,1,1,Demo record: donation rejected in this sample dataset.,2026-10-26 11:00:00
+13,DON-2026-0013,13,2026-09-17,1,CLEARED,1,1,Demo record: screening marked cleared for UI testing.,2026-09-17 11:00:00
+14,DON-2026-0014,14,2026-09-24,1,CLEARED,1,1,Demo record: screening marked cleared for UI testing.,2026-09-24 11:00:00
+15,DON-2026-0015,15,2026-10-20,1,CLEARED,1,1,Demo record: screening marked cleared for UI testing.,2026-10-20 11:00:00
+16,DON-2026-0016,16,2026-10-26,1,PENDING,,1,Demo record: screening is pending.,2026-10-26 11:00:00
+17,DON-2026-0017,17,2026-09-17,1,CLEARED,1,1,Demo record: screening marked cleared for UI testing.,2026-09-17 11:00:00
+18,DON-2026-0018,18,2026-09-24,1,CLEARED,1,1,Demo record: screening marked cleared for UI testing.,2026-09-24 11:00:00
+19,DON-2026-0019,19,2026-10-20,1,CLEARED,1,1,Demo record: screening marked cleared for UI testing.,2026-10-20 11:00:00
+20,DON-2026-0020,20,2026-10-26,1,PENDING,,1,Demo record: screening is pending.,2026-10-26 11:00:00
+21,DON-2026-0021,21,2026-09-17,1,CLEARED,1,1,Demo record: screening marked cleared for UI testing.,2026-09-17 11:00:00
+22,DON-2026-0022,22,2026-09-24,1,CLEARED,1,1,Demo record: screening marked cleared for UI testing.,2026-09-24 11:00:00
+23,DON-2026-0023,23,2026-10-20,1,CLEARED,1,1,Demo record: screening marked cleared for UI testing.,2026-10-20 11:00:00
+24,DON-2026-0024,24,2026-10-26,1,DEFERRED,1,1,Demo record: donor deferred in this sample dataset.,2026-10-26 11:00:00
+25,DON-2026-0025,25,2026-09-17,1,CLEARED,1,1,Demo record: screening marked cleared for UI testing.,2026-09-17 11:00:00
+26,DON-2026-0026,26,2026-09-24,1,CLEARED,1,1,Demo record: screening marked cleared for UI testing.,2026-09-24 11:00:00
+27,DON-2026-0027,27,2026-10-20,1,CLEARED,1,1,Demo record: screening marked cleared for UI testing.,2026-10-20 11:00:00
+28,DON-2026-0028,28,2026-10-26,1,REJECTED,1,1,Demo record: donation rejected in this sample dataset.,2026-10-26 11:00:00
+29,DON-2026-0029,29,2026-09-17,1,CLEARED,1,1,Demo record: screening marked cleared for UI testing.,2026-09-17 11:00:00
+30,DON-2026-0030,30,2026-09-24,1,CLEARED,1,1,Demo record: screening marked cleared for UI testing.,2026-09-24 11:00:00
+31,DON-2026-0031,31,2026-10-20,1,CLEARED,1,1,Demo record: screening marked cleared for UI testing.,2026-10-20 11:00:00
+32,DON-2026-0032,32,2026-10-26,1,PENDING,,1,Demo record: screening is pending.,2026-10-26 11:00:00

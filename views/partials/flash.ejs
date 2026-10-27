@@ -1,0 +1,17 @@
+<% if (typeof flashSuccess !== 'undefined' && flashSuccess.length > 0) { %>
+  <% flashSuccess.forEach(msg => { %>
+    <div class="alert alert-success">
+      <span>✅ <%= msg %></span>
+      <button type="button" class="alert-close" aria-label="Dismiss">&times;</button>
+    </div>
+  <% }) %>
+<% } %>
+
+<% if (typeof flashError !== 'undefined' && flashError.length > 0) { %>
+  <% flashError.forEach(msg => { %>
+    <div class="alert alert-error">
+      <span>⚠️ <%= msg %></span>
+      <button type="button" class="alert-close" aria-label="Dismiss">&times;</button>
+    </div>
+  <% }) %>
+<% } %>

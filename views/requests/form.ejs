@@ -1,0 +1,134 @@
+<%- include('../partials/header') %>
+
+<div class="app-container">
+  <%- include('../partials/sidebar') %>
+
+  <main class="main-wrapper">
+    <header class="top-header">
+      <div class="page-title">
+        <h2>Submit Hospital Blood Request</h2>
+        <p>Record a clinical blood requisition from an authorized partner hospital</p>
+      </div>
+      <div class="header-actions">
+        <a href="/requests" class="btn btn-secondary btn-sm">&larr; Back to Requests</a>
+      </div>
+    </header>
+
+    <div class="content-body">
+      <%- include('../partials/safety_banner') %>
+      <%- include('../partials/flash') %>
+
+      <div class="card" style="max-width: 800px; margin: 0 auto;">
+        <div class="card-header">
+          <h3>📋 Clinical Requisition Form</h3>
+        </div>
+        <div class="card-body">
+          <form action="/requests" method="POST">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="request_code">Requisition Code *</label>
+                <input 
+                  type="text" 
+                  id="request_code" 
+                  name="request_code" 
+                  class="form-control" 
+                  value="<%= suggestedCode %>" 
+                  required
+                >
+                <small class="form-text">Sequential reference format (e.g. REQ-2026-0013)</small>
+              </div>
+
+              <div class="form-group">
+                <label for="hospital_id">Requesting Hospital *</label>
+                <select id="hospital_id" name="hospital_id" class="form-control" required>
+                  <option value="">-- Select Partner Hospital --</option>
+                  <% hospitals.forEach(h => { %>
+                    <option value="<%= h.hospital_id %>">
+                      <%= h.hospital_name %> (<%= h.hospital_code %>) &bull; <%= h.city %>
+                    </option>
+                  <% }) %>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="blood_group">Required Blood Group *</label>
+                <select id="blood_group" name="blood_group" class="form-control" required>
+                  <option value="">-- Choose Blood Group --</option>
+                  <% validBloodGroups.forEach(bg => { %>
+                    <option value="<%= bg %>"><%= bg %></option>
+                  <% }) %>
+                </select>
+                <small class="form-text">Exact ABO/Rh blood group requested</small>
+              </div>
+
+              <div class="form-group">
+                <label for="units_requested">Units Requested *</label>
+                <input 
+                  type="number" 
+                  id="units_requested" 
+                  name="units_requested" 
+                  class="form-control" 
+                  value="1" 
+                  min="1" 
+                  max="20" 
+                  required
+                >
+                <small class="form-text">Positive integer quantity</small>
+              </div>
+
+              <div class="form-group">
+                <label for="urgency">Clinical Urgency Level *</label>
+                <select id="urgency" name="urgency" class="form-control" required>
+                  <option value="ROUTINE" selected>ROUTINE (Standard scheduled surgeries)</option>
+                  <option value="URGENT">URGENT (Within 24 hours)</option>
+                  <option value="EMERGENCY">EMERGENCY (Immediate trauma / ICU need)</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="required_by">Required By Date</label>
+                <input 
+                  type="date" 
+                  id="required_by" 
+                  name="required_by" 
+                  class="form-control"
+                >
+              </div>
+
+              <div class="form-group">
+                <label for="patient_reference">Patient / Department Reference</label>
+                <input 
+                  type="text" 
+                  id="patient_reference" 
+                  name="patient_reference" 
+                  class="form-control" 
+                  placeholder="e.g. PAT-2026-4401 or OT-3"
+                >
+              </div>
+
+              <div class="form-group" style="grid-column: 1 / -1;">
+                <label for="notes">Clinical Requisition Notes</label>
+                <textarea 
+                  id="notes" 
+                  name="notes" 
+                  class="form-control" 
+                  rows="3" 
+                  placeholder="e.g. Patient scheduled for elective orthopedic surgery at 9:00 AM."
+                ></textarea>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">
+                📋 Submit Requisition
+              </button>
+              <a href="/requests" class="btn btn-secondary">Cancel</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,161 @@
+<%- include('../partials/header') %>
+
+<div class="app-container">
+  <%- include('../partials/sidebar') %>
+
+  <main class="main-wrapper">
+    <header class="top-header">
+      <div class="page-title">
+        <h2>Blood Donations & Screening Laboratory</h2>
+        <p>Review blood collection records, perform safety screening, and clear units for inventory intake</p>
+      </div>
+      <div class="header-actions">
+        <a href="/donations/new" class="btn btn-primary btn-sm">+ Record New Donation</a>
+      </div>
+    </header>
+
+    <div class="content-body">
+      <%- include('../partials/safety_banner') %>
+      <%- include('../partials/flash') %>
+
+      <!-- Filter Controls -->
+      <form action="/donations" method="GET" class="filter-bar">
+        <input 
+          type="text" 
+          name="q" 
+          class="form-control search-input" 
+          placeholder="🔍 Search donation code (e.g. DON-2026-0004), donor name, batch code..." 
+          value="<%= q %>"
+          data-table-search="donations-table"
+        >
+
+        <select name="status" class="form-control" style="width: auto; min-width: 180px;" onchange="this.form.submit()">
+          <option value="">All Screening Statuses</option>
+          <% validStatuses.forEach(st => { %>
+            <option value="<%= st %>" <%= selectedStatus === st ? 'selected' : '' %>><%= st %></option>
+          <% }) %>
+        </select>
+
+        <button type="submit" class="btn btn-navy btn-sm">Filter</button>
+        <% if (q || selectedStatus) { %>
+          <a href="/donations" class="btn btn-secondary btn-sm">Reset</a>
+        <% } %>
+      </form>
+
+      <!-- Donations Table -->
+      <div class="card">
+        <div class="card-header">
+          <h3>🧪 Donation Records (<%= donations.length %> Total)</h3>
+          <span style="font-size: 0.8rem; color: var(--text-muted);">
+            * Only CLEARED donations create inventory batches & DONATION_IN stock movements
+          </span>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table" id="donations-table">
+            <thead>
+              <tr>
+                <th>Donation Code</th>
+                <th>Donor Details</th>
+                <th>Blood Group</th>
+                <th>Collection Date</th>
+                <th>Units</th>
+                <th>Screening Status</th>
+                <th>Inventory Batch</th>
+                <th>Screened By</th>
+                <th>Screening Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (donations.length === 0) { %>
+                <tr>
+                  <td colspan="9">
+                    <div class="empty-state">
+                      <div class="empty-state-icon">🧪</div>
+                      <h4>No Donations Found</h4>
+                      <p>No donation records matched your current query or filter criteria.</p>
+                      <a href="/donations/new" class="btn btn-primary btn-sm">+ Record Donation</a>
+                    </div>
+                  </td>
+                </tr>
+              <% } else { %>
+                <% donations.forEach(d => { %>
+                  <tr>
+                    <td><strong><%= d.donation_code %></strong></td>
+                    <td>
+                      <a href="/donors/<%= d.donor_id %>" style="color: var(--navy); font-weight: 600; text-decoration: none;">
+                        <%= d.donor_name %>
+                      </a>
+                      <div style="font-size: 0.75rem; color: var(--text-muted);"><%= d.donor_code %> &bull; <%= d.donor_city %></div>
+                    </td>
+                    <td><span class="blood-badge"><%= d.blood_group %></span></td>
+                    <td><%= d.donation_date %></td>
+                    <td><%= d.units_collected %> unit</td>
+                    <td>
+                      <% if (d.screening_status === 'CLEARED') { %>
+                        <span class="badge badge-green">CLEARED</span>
+                      <% } else if (d.screening_status === 'PENDING') { %>
+                        <span class="badge badge-amber">PENDING</span>
+                      <% } else if (d.screening_status === 'DEFERRED') { %>
+                        <span class="badge badge-gray">DEFERRED</span>
+                      <% } else { %>
+                        <span class="badge badge-red"><%= d.screening_status %></span>
+                      <% } %>
+                    </td>
+                    <td>
+                      <% if (d.batch_code) { %>
+                        <a href="/inventory?q=<%= encodeURIComponent(d.batch_code) %>" style="color: var(--primary); font-weight: 600;">
+                          <%= d.batch_code %>
+                        </a>
+                        <div style="font-size: 0.75rem;">
+                          <span class="badge badge-<%= d.batch_status === 'AVAILABLE' ? 'green' : (d.batch_status === 'EXPIRED' ? 'red' : 'gray') %>">
+                            <%= d.batch_status %> (<%= d.units_available %>)
+                          </span>
+                        </div>
+                      <% } else { %>
+                        <span style="font-size: 0.8rem; color: var(--text-muted);">None (Not Cleared)</span>
+                      <% } %>
+                    </td>
+                    <td>
+                      <%= d.screened_by_name || 'Pending Review' %>
+                    </td>
+                    <td>
+                      <% if (d.screening_status === 'PENDING') { %>
+                        <div style="display: flex; gap: 0.35rem; align-items: center;">
+                          <form action="/donations/<%= d.donation_id %>/screen" method="POST" style="margin: 0;">
+                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                            <input type="hidden" name="new_status" value="CLEARED">
+                            <button type="submit" class="btn btn-success btn-sm" title="Screen and Clear into Inventory">
+                              Clear &rarr; Stock
+                            </button>
+                          </form>
+
+                          <form action="/donations/<%= d.donation_id %>/screen" method="POST" style="margin: 0;">
+                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                            <input type="hidden" name="new_status" value="DEFERRED">
+                            <button type="submit" class="btn btn-secondary btn-sm" title="Defer Donation">
+                              Defer
+                            </button>
+                          </form>
+
+                          <form action="/donations/<%= d.donation_id %>/screen" method="POST" style="margin: 0;">
+                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                            <input type="hidden" name="new_status" value="REJECTED">
+                            <button type="submit" class="btn btn-danger btn-sm" title="Reject Sample">
+                              Reject
+                            </button>
+                          </form>
+                        </div>
+                      <% } else { %>
+                        <span style="font-size: 0.8rem; color: var(--text-muted);">Screening Complete</span>
+                      <% } %>
+                    </td>
+                  </tr>
+                <% }) %>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,21 @@
+{
+  "name": "blood-bank-management-system",
+  "version": "1.0.0",
+  "private": true,
+  "description": "College DBMS project using Node.js, Express, MySQL, HTML, CSS, and vanilla JavaScript",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "connect-flash": "^0.1.1",
+    "dotenv": "^16.4.7",
+    "ejs": "^3.1.10",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "express-session": "^1.18.1",
+    "helmet": "^8.0.0",
+    "mysql2": "^3.12.0"
+  }
+}

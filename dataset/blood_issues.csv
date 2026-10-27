@@ -1,0 +1,6 @@
+issue_id,issue_code,request_id,batch_id,units_issued,issued_at,issued_by,notes
+1,ISS-2026-0001,2,24,1,2026-10-24 14:00:00,1,Synthetic issue transaction for coursework demonstration.
+2,ISS-2026-0002,4,15,1,2026-10-22 14:00:00,1,Synthetic issue transaction for coursework demonstration.
+3,ISS-2026-0003,5,21,1,2026-10-21 14:00:00,1,Synthetic issue transaction for coursework demonstration.
+4,ISS-2026-0004,7,12,1,2026-10-19 14:00:00,1,Synthetic issue transaction for coursework demonstration.
+5,ISS-2026-0005,8,3,1,2026-10-18 14:00:00,1,Synthetic issue transaction for coursework demonstration.

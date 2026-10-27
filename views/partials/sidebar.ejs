@@ -1,0 +1,79 @@
+<aside class="sidebar">
+  <a href="/dashboard" class="sidebar-brand">
+    <div class="brand-icon">🩸</div>
+    <div class="brand-text">
+      <h1>BloodBank OS</h1>
+      <span>DBMS Coursework Edition</span>
+    </div>
+  </a>
+
+  <ul class="sidebar-nav">
+    <div class="nav-section-title">Operations</div>
+    <li class="nav-item">
+      <a href="/dashboard" class="nav-link <%= currentPath === '/dashboard' ? 'active' : '' %>">
+        <span class="nav-icon">📊</span>
+        <span>Dashboard</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a href="/donors" class="nav-link <%= currentPath.startsWith('/donors') ? 'active' : '' %>">
+        <span class="nav-icon">👤</span>
+        <span>Donors (CRUD)</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a href="/donations" class="nav-link <%= currentPath.startsWith('/donations') ? 'active' : '' %>">
+        <span class="nav-icon">🧪</span>
+        <span>Donations & Screening</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a href="/inventory" class="nav-link <%= currentPath.startsWith('/inventory') ? 'active' : '' %>">
+        <span class="nav-icon">📦</span>
+        <span>Stock & Batches</span>
+      </a>
+    </li>
+
+    <div class="nav-section-title">Distribution</div>
+    <li class="nav-item">
+      <a href="/hospitals" class="nav-link <%= currentPath.startsWith('/hospitals') ? 'active' : '' %>">
+        <span class="nav-icon">🏥</span>
+        <span>Hospitals</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a href="/requests" class="nav-link <%= currentPath.startsWith('/requests') ? 'active' : '' %>">
+        <span class="nav-icon">📋</span>
+        <span>Blood Requests</span>
+      </a>
+    </li>
+
+    <div class="nav-section-title">Analytics</div>
+    <li class="nav-item">
+      <a href="/reports" class="nav-link <%= currentPath.startsWith('/reports') ? 'active' : '' %>">
+        <span class="nav-icon">📈</span>
+        <span>SQL Reports & Audit</span>
+      </a>
+    </li>
+  </ul>
+
+  <% if (typeof user !== 'undefined' && user) { %>
+    <div class="sidebar-user">
+      <div class="user-info">
+        <div class="user-avatar">
+          <%= user.full_name ? user.full_name.charAt(0).toUpperCase() : 'U' %>
+        </div>
+        <div class="user-details">
+          <h4><%= user.full_name %></h4>
+          <span>Role: <strong><%= user.role %></strong></span>
+        </div>
+      </div>
+      <form action="/logout" method="POST" style="margin: 0;">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button type="submit" class="btn btn-outline-danger btn-sm" style="width: 100%;">
+          🚪 Sign Out
+        </button>
+      </form>
+    </div>
+  <% } %>
+</aside>

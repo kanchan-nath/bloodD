@@ -1,0 +1,3 @@
+user_id,full_name,username,password_hash,role,is_active,created_at
+1,Demo Administrator,admin,pbkdf2:sha256:600000$6d95954d2d6ebc71$f6fba0b53e1f0067b19d4df709cd5d44b05425555231971999b9e8fc22cd3867,ADMIN,1,2026-10-01 09:00:00
+2,Demo Staff Member,staff,pbkdf2:sha256:600000$9d589b11dfc01f56$8f3f592f4f63705df96f29b7e8f4f6d5812a5a1c998758f9b5c4f1360e189349,STAFF,1,2026-10-01 09:10:00

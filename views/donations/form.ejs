@@ -1,0 +1,119 @@
+<%- include('../partials/header') %>
+
+<div class="app-container">
+  <%- include('../partials/sidebar') %>
+
+  <main class="main-wrapper">
+    <header class="top-header">
+      <div class="page-title">
+        <h2>Record Blood Donation</h2>
+        <p>Log a voluntary whole blood collection session from an authorized donor</p>
+      </div>
+      <div class="header-actions">
+        <a href="/donations" class="btn btn-secondary btn-sm">&larr; Back to Donations</a>
+      </div>
+    </header>
+
+    <div class="content-body">
+      <%- include('../partials/safety_banner') %>
+      <%- include('../partials/flash') %>
+
+      <div class="card" style="max-width: 800px; margin: 0 auto;">
+        <div class="card-header">
+          <h3>🧪 Donation Session Intake Form</h3>
+        </div>
+        <div class="card-body">
+          <form action="/donations" method="POST">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="donation_code">Donation Tracking Code *</label>
+                <input 
+                  type="text" 
+                  id="donation_code" 
+                  name="donation_code" 
+                  class="form-control" 
+                  value="<%= suggestedCode %>" 
+                  required
+                >
+                <small class="form-text">Sequential code format (e.g. DON-2026-0033)</small>
+              </div>
+
+              <div class="form-group">
+                <label for="donor_id">Select Registered Donor *</label>
+                <select id="donor_id" name="donor_id" class="form-control" required>
+                  <option value="">-- Choose Donor --</option>
+                  <% donors.forEach(d => { %>
+                    <option value="<%= d.donor_id %>" <%= preselectedDonorId === d.donor_id ? 'selected' : '' %>>
+                      <%= d.full_name %> (<%= d.donor_code %>) &bull; <%= d.blood_group %> &bull; <%= d.city %>
+                    </option>
+                  <% }) %>
+                </select>
+                <small class="form-text">
+                  Don't see the donor? <a href="/donors/new" target="_blank" style="color: var(--primary);">Register new donor &rarr;</a>
+                </small>
+              </div>
+
+              <div class="form-group">
+                <label for="donation_date">Collection Date *</label>
+                <input 
+                  type="date" 
+                  id="donation_date" 
+                  name="donation_date" 
+                  class="form-control" 
+                  value="<%= today %>" 
+                  required
+                >
+              </div>
+
+              <div class="form-group">
+                <label for="units_collected">Units Collected *</label>
+                <input 
+                  type="number" 
+                  id="units_collected" 
+                  name="units_collected" 
+                  class="form-control" 
+                  value="1" 
+                  min="1" 
+                  max="4" 
+                  required
+                >
+                <small class="form-text">Standard whole blood unit quantity (default 1)</small>
+              </div>
+
+              <div class="form-group">
+                <label for="screening_status">Initial Screening Status *</label>
+                <select id="screening_status" name="screening_status" class="form-control" required>
+                  <option value="PENDING" selected>PENDING (Awaiting Lab Tests)</option>
+                  <option value="CLEARED">CLEARED (Instant Stock Intake)</option>
+                  <option value="DEFERRED">DEFERRED</option>
+                  <option value="REJECTED">REJECTED</option>
+                </select>
+                <small class="form-text">If CLEARED, inventory batch and stock movement are created atomically.</small>
+              </div>
+
+              <div class="form-group" style="grid-column: 1 / -1;">
+                <label for="notes">Clinical / Session Notes</label>
+                <textarea 
+                  id="notes" 
+                  name="notes" 
+                  class="form-control" 
+                  rows="3" 
+                  placeholder="e.g. Standard 450ml collection. Hemoglobin screening passed at 14.2 g/dL."
+                ></textarea>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">
+                💾 Submit Donation Record
+              </button>
+              <a href="/donations" class="btn btn-secondary">Cancel</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+<%- include('../partials/footer') %>

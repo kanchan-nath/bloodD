@@ -1,0 +1,132 @@
+<%- include('../partials/header') %>
+
+<div class="app-container">
+  <%- include('../partials/sidebar') %>
+
+  <main class="main-wrapper">
+    <header class="top-header">
+      <div class="page-title">
+        <h2>Batch Audit: <%= batch.batch_code %></h2>
+        <p>Comprehensive provenance, donor lineage, and stock movement ledger</p>
+      </div>
+      <div class="header-actions">
+        <a href="/inventory" class="btn btn-secondary btn-sm">&larr; Back to Inventory</a>
+      </div>
+    </header>
+
+    <div class="content-body">
+      <%- include('../partials/safety_banner') %>
+      <%- include('../partials/flash') %>
+
+      <!-- Batch Overview Card -->
+      <div class="card" style="margin-bottom: 1.5rem;">
+        <div class="card-header">
+          <h3>📦 Batch Metadata & Current Status</h3>
+          <span class="blood-badge" style="font-size: 1rem;"><%= batch.blood_group %></span>
+        </div>
+        <div class="card-body">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
+            <div>
+              <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Batch Code:</span>
+              <div style="font-weight: 700; font-size: 1.1rem;"><%= batch.batch_code %></div>
+            </div>
+            <div>
+              <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Current Status:</span>
+              <div>
+                <% if (batch.status === 'AVAILABLE') { %>
+                  <span class="badge badge-green">AVAILABLE</span>
+                <% } else if (batch.status === 'EXPIRED') { %>
+                  <span class="badge badge-red">EXPIRED</span>
+                <% } else if (batch.status === 'EMPTY') { %>
+                  <span class="badge badge-gray">EMPTY</span>
+                <% } else { %>
+                  <span class="badge badge-amber"><%= batch.status %></span>
+                <% } %>
+              </div>
+            </div>
+            <div>
+              <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Available / Total:</span>
+              <div style="font-weight: 600;"><%= batch.units_available %> / <%= batch.units_total %> unit(s)</div>
+            </div>
+            <div>
+              <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Component:</span>
+              <div><%= batch.component_type %></div>
+            </div>
+            <div>
+              <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Collection Date:</span>
+              <div><%= batch.collection_date %></div>
+            </div>
+            <div>
+              <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Expiry Date:</span>
+              <div><%= batch.expiry_date %> (<%= batch.days_left %> days remaining)</div>
+            </div>
+            <div>
+              <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Linked Donor:</span>
+              <div>
+                <a href="/donors/<%= batch.donor_id %>" style="color: var(--navy); font-weight: 600;">
+                  <%= batch.donor_name %> (<%= batch.donor_code %>)
+                </a>
+              </div>
+            </div>
+            <div>
+              <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Linked Donation:</span>
+              <div><%= batch.donation_code %></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stock Movements Audit Trail -->
+      <div class="card">
+        <div class="card-header">
+          <h3>📋 Audit Trail: Stock Movements (Table: <code>stock_movements</code>)</h3>
+          <span style="font-size: 0.8rem; color: var(--text-muted);">
+            Immutable transaction log of every unit intake, issue, and adjustment
+          </span>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Movement ID</th>
+                <th>Timestamp</th>
+                <th>Movement Type</th>
+                <th>Quantity</th>
+                <th>Reference Code</th>
+                <th>Operator</th>
+                <th>Audit Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (movements.length === 0) { %>
+                <tr><td colspan="7" style="text-align: center; color: var(--text-muted);">No movement events logged for this batch.</td></tr>
+              <% } else { %>
+                <% movements.forEach(m => { %>
+                  <tr>
+                    <td>#<%= m.movement_id %></td>
+                    <td><%= m.created_at %></td>
+                    <td>
+                      <% if (m.movement_type === 'DONATION_IN') { %>
+                        <span class="badge badge-green">DONATION_IN</span>
+                      <% } else if (m.movement_type === 'ISSUE_OUT') { %>
+                        <span class="badge badge-red">ISSUE_OUT</span>
+                      <% } else if (m.movement_type === 'EXPIRY_OUT') { %>
+                        <span class="badge badge-amber">EXPIRY_OUT</span>
+                      <% } else { %>
+                        <span class="badge badge-gray"><%= m.movement_type %></span>
+                      <% } %>
+                    </td>
+                    <td><strong><%= m.quantity %> unit(s)</strong></td>
+                    <td><code><%= m.reference_code || 'N/A' %></code></td>
+                    <td><%= m.logged_by_name %></td>
+                    <td><%= m.notes || '-' %></td>
+                  </tr>
+                <% }) %>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+<%- include('../partials/footer') %>

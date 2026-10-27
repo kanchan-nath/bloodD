@@ -1,0 +1,198 @@
+<%- include('../partials/header') %>
+
+<div class="app-container">
+  <%- include('../partials/sidebar') %>
+
+  <main class="main-wrapper">
+    <header class="top-header">
+      <div class="page-title">
+        <h2>Whole Blood Inventory & Batch Management</h2>
+        <p>Monitor refrigerated unit batches, track expiration windows, and inspect movement audit logs</p>
+      </div>
+      <div class="header-actions">
+        <a href="/donations/new" class="btn btn-primary btn-sm">+ Intake from Cleared Donation</a>
+      </div>
+    </header>
+
+    <div class="content-body">
+      <%- include('../partials/safety_banner') %>
+      <%- include('../partials/flash') %>
+
+      <!-- Inventory Summary Metrics -->
+      <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+        <div class="stat-card">
+          <div class="stat-icon red">🩸</div>
+          <div class="stat-data">
+            <div class="stat-number"><%= totalAvailableUnits %></div>
+            <div class="stat-label">Total Ready Units</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon amber">⏳</div>
+          <div class="stat-data">
+            <div class="stat-number"><%= nearExpiryCount %></div>
+            <div class="stat-label">Expiring in &le;14 Days</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon blue">📦</div>
+          <div class="stat-data">
+            <div class="stat-number"><%= batches.length %></div>
+            <div class="stat-label">Total Batches Listed</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Blood Group Stock Status Bar -->
+      <div class="card" style="margin-bottom: 1.5rem;">
+        <div class="card-header">
+          <h3>🩸 Current Active Stock by Blood Group</h3>
+        </div>
+        <div class="card-body" style="padding: 1rem 1.5rem;">
+          <div class="stock-grid" style="margin: 0;">
+            <% Object.keys(stockSummary).forEach(bg => { %>
+              <a href="/inventory?blood_group=<%= encodeURIComponent(bg) %>" style="text-decoration: none;">
+                <div class="stock-pill <%= stockSummary[bg] < 2 ? 'low-stock' : '' %>" style="cursor: pointer;">
+                  <div class="blood-type"><%= bg %></div>
+                  <div class="units-count"><%= stockSummary[bg] %></div>
+                  <div class="units-label">Units Available</div>
+                </div>
+              </a>
+            <% }) %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters Bar -->
+      <form action="/inventory" method="GET" class="filter-bar">
+        <input 
+          type="text" 
+          name="q" 
+          class="form-control search-input" 
+          placeholder="🔍 Search batch code (e.g. BB-0002), donation code, or donor..." 
+          value="<%= q %>"
+          data-table-search="inventory-table"
+        >
+
+        <select name="blood_group" class="form-control" style="width: auto; min-width: 160px;" onchange="this.form.submit()">
+          <option value="">All Blood Groups</option>
+          <% validBloodGroups.forEach(bg => { %>
+            <option value="<%= bg %>" <%= selectedBloodGroup === bg ? 'selected' : '' %>><%= bg %></option>
+          <% }) %>
+        </select>
+
+        <select name="status" class="form-control" style="width: auto; min-width: 160px;" onchange="this.form.submit()">
+          <option value="">All Batch Statuses</option>
+          <% validBatchStatuses.forEach(st => { %>
+            <option value="<%= st %>" <%= selectedStatus === st ? 'selected' : '' %>><%= st %></option>
+          <% }) %>
+        </select>
+
+        <button type="submit" class="btn btn-navy btn-sm">Filter</button>
+        <% if (q || selectedBloodGroup || selectedStatus) { %>
+          <a href="/inventory" class="btn btn-secondary btn-sm">Reset</a>
+        <% } %>
+      </form>
+
+      <!-- Batches Data Table -->
+      <div class="card">
+        <div class="card-header">
+          <h3>📦 Inventory Batches (<%= batches.length %> Records)</h3>
+          <span style="font-size: 0.8rem; color: var(--text-muted);">
+            Sorted by available stock first, then earliest expiration (FIFO)
+          </span>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table" id="inventory-table">
+            <thead>
+              <tr>
+                <th>Batch Code</th>
+                <th>Blood Group</th>
+                <th>Available / Total</th>
+                <th>Collection Date</th>
+                <th>Expiry Date</th>
+                <th>Days Remaining</th>
+                <th>Status</th>
+                <th>Linked Donation</th>
+                <th>Audit Movements</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (batches.length === 0) { %>
+                <tr>
+                  <td colspan="10">
+                    <div class="empty-state">
+                      <div class="empty-state-icon">📦</div>
+                      <h4>No Batches Found</h4>
+                      <p>No inventory batches matched your filters.</p>
+                      <a href="/inventory" class="btn btn-secondary btn-sm">Clear Filters</a>
+                    </div>
+                  </td>
+                </tr>
+              <% } else { %>
+                <% batches.forEach(b => { %>
+                  <tr>
+                    <td><strong><%= b.batch_code %></strong></td>
+                    <td><span class="blood-badge"><%= b.blood_group %></span></td>
+                    <td>
+                      <span style="font-weight: 700; color: <%= b.units_available > 0 ? 'var(--navy)' : 'var(--text-muted)' %>">
+                        <%= b.units_available %>
+                      </span>
+                      / <%= b.units_total %> unit(s)
+                    </td>
+                    <td><%= b.collection_date %></td>
+                    <td><%= b.expiry_date %></td>
+                    <td>
+                      <% if (b.status === 'AVAILABLE') { %>
+                        <% if (b.days_left <= 0) { %>
+                          <span class="badge badge-red">EXPIRED TODAY</span>
+                        <% } else if (b.days_left <= 7) { %>
+                          <span class="badge badge-red"><%= b.days_left %> days (CRITICAL)</span>
+                        <% } else if (b.days_left <= 14) { %>
+                          <span class="badge badge-amber"><%= b.days_left %> days</span>
+                        <% } else { %>
+                          <span class="badge badge-green"><%= b.days_left %> days</span>
+                        <% } %>
+                      <% } else { %>
+                        <span style="color: var(--text-muted); font-size: 0.8rem;">N/A (<%= b.status %>)</span>
+                      <% } %>
+                    </td>
+                    <td>
+                      <% if (b.status === 'AVAILABLE') { %>
+                        <span class="badge badge-green">AVAILABLE</span>
+                      <% } else if (b.status === 'EXPIRED') { %>
+                        <span class="badge badge-red">EXPIRED</span>
+                      <% } else if (b.status === 'EMPTY') { %>
+                        <span class="badge badge-gray">EMPTY (ISSUED)</span>
+                      <% } else if (b.status === 'QUARANTINED') { %>
+                        <span class="badge badge-amber">QUARANTINED</span>
+                      <% } else { %>
+                        <span class="badge badge-gray"><%= b.status %></span>
+                      <% } %>
+                    </td>
+                    <td>
+                      <a href="/donations?q=<%= encodeURIComponent(b.donation_code) %>" style="color: var(--navy); font-size: 0.85rem; text-decoration: none;">
+                        <%= b.donation_code %>
+                      </a>
+                    </td>
+                    <td>
+                      <span class="badge badge-blue"><%= b.movement_count %> log(s)</span>
+                    </td>
+                    <td>
+                      <a href="/inventory/batch/<%= b.batch_id %>" class="btn btn-secondary btn-sm" title="View Audit Trail">
+                        Inspect
+                      </a>
+                    </td>
+                  </tr>
+                <% }) %>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+<%- include('../partials/footer') %>

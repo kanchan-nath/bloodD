@@ -1,0 +1,147 @@
+<%- include('../partials/header') %>
+
+<div class="app-container">
+  <%- include('../partials/sidebar') %>
+
+  <main class="main-wrapper">
+    <header class="top-header">
+      <div class="page-title">
+        <h2>Donor Profile: <%= donor.full_name %></h2>
+        <p>Details and comprehensive donation records for <%= donor.donor_code %></p>
+      </div>
+      <div class="header-actions">
+        <a href="/donations/new?donor_id=<%= donor.donor_id %>" class="btn btn-primary btn-sm">+ Record Donation</a>
+        <a href="/donors/<%= donor.donor_id %>/edit" class="btn btn-secondary btn-sm">Edit Profile</a>
+        <a href="/donors" class="btn btn-secondary btn-sm">&larr; Back to Donors</a>
+      </div>
+    </header>
+
+    <div class="content-body">
+      <%- include('../partials/safety_banner') %>
+      <%- include('../partials/flash') %>
+
+      <!-- Profile Overview Cards -->
+      <div class="card" style="margin-bottom: 1.5rem;">
+        <div class="card-header">
+          <h3>👤 Donor Demographics & Information</h3>
+          <span class="blood-badge" style="font-size: 1rem; padding: 0.35rem 0.85rem;"><%= donor.blood_group %></span>
+        </div>
+        <div class="card-body">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
+            <div>
+              <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Donor Code:</span>
+              <div style="font-weight: 700; font-size: 1.05rem;"><%= donor.donor_code %></div>
+            </div>
+            <div>
+              <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Full Name:</span>
+              <div style="font-weight: 600;"><%= donor.full_name %></div>
+            </div>
+            <div>
+              <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Gender:</span>
+              <div><%= donor.gender %></div>
+            </div>
+            <div>
+              <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Date of Birth:</span>
+              <div><%= donor.date_of_birth %></div>
+            </div>
+            <div>
+              <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">City:</span>
+              <div><%= donor.city %></div>
+            </div>
+            <div>
+              <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Phone:</span>
+              <div><%= donor.phone || 'N/A' %></div>
+            </div>
+            <div>
+              <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Email:</span>
+              <div><%= donor.email || 'N/A' %></div>
+            </div>
+            <div>
+              <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Registered On:</span>
+              <div><%= donor.created_at %></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Donation History Table -->
+      <div class="card">
+        <div class="card-header">
+          <h3>🧪 Donation History (<%= donations.length %> Records)</h3>
+          <a href="/donations/new?donor_id=<%= donor.donor_id %>" class="btn btn-primary btn-sm">+ Record New Donation</a>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Donation Code</th>
+                <th>Collection Date</th>
+                <th>Units</th>
+                <th>Screening Status</th>
+                <th>Screened By</th>
+                <th>Linked Inventory Batch</th>
+                <th>Batch Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (donations.length === 0) { %>
+                <tr>
+                  <td colspan="8">
+                    <div class="empty-state">
+                      <div class="empty-state-icon">🩸</div>
+                      <h4>No Donations Yet</h4>
+                      <p>This donor has not completed any donation sessions yet.</p>
+                      <a href="/donations/new?donor_id=<%= donor.donor_id %>" class="btn btn-primary btn-sm">+ Record First Donation</a>
+                    </div>
+                  </td>
+                </tr>
+              <% } else { %>
+                <% donations.forEach(d => { %>
+                  <tr>
+                    <td><strong><%= d.donation_code %></strong></td>
+                    <td><%= d.donation_date %></td>
+                    <td><%= d.units_collected %> unit</td>
+                    <td>
+                      <% if (d.screening_status === 'CLEARED') { %>
+                        <span class="badge badge-green">CLEARED</span>
+                      <% } else if (d.screening_status === 'PENDING') { %>
+                        <span class="badge badge-amber">PENDING</span>
+                      <% } else if (d.screening_status === 'DEFERRED') { %>
+                        <span class="badge badge-gray">DEFERRED</span>
+                      <% } else { %>
+                        <span class="badge badge-red"><%= d.screening_status %></span>
+                      <% } %>
+                    </td>
+                    <td><%= d.screened_by_name || 'Pending Review' %></td>
+                    <td>
+                      <% if (d.batch_code) { %>
+                        <a href="/inventory?q=<%= encodeURIComponent(d.batch_code) %>" style="color: var(--primary); font-weight: 600;">
+                          <%= d.batch_code %>
+                        </a>
+                      <% } else { %>
+                        <span style="color: var(--text-muted);">None</span>
+                      <% } %>
+                    </td>
+                    <td>
+                      <% if (d.batch_status) { %>
+                        <span class="badge badge-<%= d.batch_status === 'AVAILABLE' ? 'green' : (d.batch_status === 'EXPIRED' ? 'red' : 'gray') %>">
+                          <%= d.batch_status %>
+                        </span>
+                      <% } else { %>
+                        <span style="color: var(--text-muted);">-</span>
+                      <% } %>
+                    </td>
+                    <td>
+                      <a href="/donations?q=<%= encodeURIComponent(d.donation_code) %>" class="btn btn-secondary btn-sm">Inspect</a>
+                    </td>
+                  </tr>
+                <% }) %>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+<%- include('../partials/footer') %>

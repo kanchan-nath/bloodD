@@ -1,0 +1,334 @@
+<%- include('partials/header') %>
+
+<div class="app-container">
+  <%- include('partials/sidebar') %>
+
+  <main class="main-wrapper">
+    <header class="top-header">
+      <div class="page-title">
+        <h2>SQL Reports &amp; DBMS Viva Analytics</h2>
+        <p>Demonstration of SQL concepts: Multi-table JOINs, Aggregates (COUNT/SUM), GROUP BY, and Subqueries</p>
+      </div>
+      <div class="header-actions">
+        <a href="/dashboard" class="btn btn-secondary btn-sm">&larr; Back to Dashboard</a>
+      </div>
+    </header>
+
+    <div class="content-body">
+      <%- include('partials/safety_banner') %>
+      <%- include('partials/flash') %>
+
+      <!-- Viva Concept Banner -->
+      <div class="card" style="border-left: 4px solid var(--secondary); margin-bottom: 2rem;">
+        <div class="card-header" style="background-color: #eff6ff;">
+          <h3 style="color: #1e40af;">🎓 DBMS Examination &amp; Viva Reference Guide</h3>
+        </div>
+        <div class="card-body">
+          <p style="font-size: 0.875rem; color: var(--navy-light);">
+            The reports on this page execute real MySQL 8 queries against the relational schema. Each section demonstrates core relational algebra and SQL concepts required for university coursework:
+          </p>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem; font-size: 0.825rem;">
+            <div><strong>1. Grouping &amp; Aggregates:</strong> <code>COUNT()</code>, <code>SUM()</code>, <code>GROUP BY</code></div>
+            <div><strong>2. Date Partitioning:</strong> <code>DATE_FORMAT()</code>, <code>DATEDIFF()</code>, <code>CURDATE()</code></div>
+            <div><strong>3. Referential Multi-table:</strong> <code>INNER JOIN</code>, <code>LEFT JOIN</code></div>
+            <div><strong>4. Nested Subquery:</strong> <code>WHERE batch_id IN (SELECT ...)</code></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Report 1: Available Stock by Blood Group -->
+      <div class="card">
+        <div class="card-header">
+          <h3>1. Available Stock by Blood Group</h3>
+          <span class="badge badge-blue">SQL Concepts: SUM(), COUNT(), GROUP BY</span>
+        </div>
+        <div class="card-body" style="padding-bottom: 0.5rem;">
+          <details style="margin-bottom: 1rem; font-size: 0.8rem; background-color: #f8fafc; padding: 0.5rem; border-radius: 4px; border: 1px solid var(--border-color);">
+            <summary style="cursor: pointer; font-weight: 600; color: var(--navy);">View SQL Query</summary>
+            <pre style="margin-top: 0.5rem; overflow-x: auto; color: var(--navy);"><code>SELECT b.blood_group, 
+       COUNT(b.batch_id) AS total_batches,
+       COALESCE(SUM(b.units_total), 0) AS total_units_collected,
+       COALESCE(SUM(b.units_available), 0) AS available_units
+FROM blood_inventory_batches b
+WHERE b.status = 'AVAILABLE' AND b.expiry_date >= CURDATE()
+GROUP BY b.blood_group
+ORDER BY b.blood_group ASC;</code></pre>
+          </details>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Blood Group</th>
+                <th>Active Batches</th>
+                <th>Total Collected</th>
+                <th>Available Units</th>
+                <th>Availability %</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (stockReport.length === 0) { %>
+                <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No available stock found.</td></tr>
+              <% } else { %>
+                <% stockReport.forEach(r => { %>
+                  <tr>
+                    <td><span class="blood-badge"><%= r.blood_group %></span></td>
+                    <td><%= r.total_batches %></td>
+                    <td><%= r.total_units_collected %> units</td>
+                    <td><strong><%= r.available_units %> unit(s)</strong></td>
+                    <td>
+                      <span class="badge <%= r.available_units > 0 ? 'badge-green' : 'badge-red' %>">
+                        <%= r.availability_pct %>%
+                      </span>
+                    </td>
+                  </tr>
+                <% }) %>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Report 2: Donations by Screening Status and Month -->
+      <div class="card">
+        <div class="card-header">
+          <h3>2. Donations Grouped by Screening Status and Month</h3>
+          <span class="badge badge-amber">SQL Concepts: DATE_FORMAT(), COUNT(), GROUP BY</span>
+        </div>
+        <div class="card-body" style="padding-bottom: 0.5rem;">
+          <details style="margin-bottom: 1rem; font-size: 0.8rem; background-color: #f8fafc; padding: 0.5rem; border-radius: 4px; border: 1px solid var(--border-color);">
+            <summary style="cursor: pointer; font-weight: 600; color: var(--navy);">View SQL Query</summary>
+            <pre style="margin-top: 0.5rem; overflow-x: auto; color: var(--navy);"><code>SELECT DATE_FORMAT(donation_date, '%Y-%m') AS donation_month,
+       screening_status,
+       COUNT(*) AS total_donations,
+       SUM(units_collected) AS total_units
+FROM donations
+GROUP BY DATE_FORMAT(donation_date, '%Y-%m'), screening_status
+ORDER BY donation_month DESC, screening_status ASC;</code></pre>
+          </details>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Collection Month</th>
+                <th>Screening Status</th>
+                <th>Donation Count</th>
+                <th>Units Collected</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (donationsReport.length === 0) { %>
+                <tr><td colspan="4" style="text-align: center; color: var(--text-muted);">No donation records found.</td></tr>
+              <% } else { %>
+                <% donationsReport.forEach(r => { %>
+                  <tr>
+                    <td><strong><%= r.donation_month %></strong></td>
+                    <td>
+                      <% if (r.screening_status === 'CLEARED') { %>
+                        <span class="badge badge-green">CLEARED</span>
+                      <% } else if (r.screening_status === 'PENDING') { %>
+                        <span class="badge badge-amber">PENDING</span>
+                      <% } else if (r.screening_status === 'DEFERRED') { %>
+                        <span class="badge badge-gray">DEFERRED</span>
+                      <% } else { %>
+                        <span class="badge badge-red"><%= r.screening_status %></span>
+                      <% } %>
+                    </td>
+                    <td><%= r.total_donations %> donation(s)</td>
+                    <td><%= r.total_units %> unit(s)</td>
+                  </tr>
+                <% }) %>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Report 3: Requests Grouped by Status & Urgency -->
+      <div class="card">
+        <div class="card-header">
+          <h3>3. Hospital Blood Requests by Urgency and Status</h3>
+          <span class="badge badge-blue">SQL Concepts: Multi-Column GROUP BY, FIELD()</span>
+        </div>
+        <div class="card-body" style="padding-bottom: 0.5rem;">
+          <details style="margin-bottom: 1rem; font-size: 0.8rem; background-color: #f8fafc; padding: 0.5rem; border-radius: 4px; border: 1px solid var(--border-color);">
+            <summary style="cursor: pointer; font-weight: 600; color: var(--navy);">View SQL Query</summary>
+            <pre style="margin-top: 0.5rem; overflow-x: auto; color: var(--navy);"><code>SELECT urgency,
+       status,
+       COUNT(*) AS total_requests,
+       SUM(units_requested) AS total_units_demanded
+FROM blood_requests
+GROUP BY urgency, status
+ORDER BY FIELD(urgency, 'EMERGENCY', 'URGENT', 'ROUTINE'), status ASC;</code></pre>
+          </details>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Urgency Level</th>
+                <th>Request Status</th>
+                <th>Total Requisitions</th>
+                <th>Total Units Demanded</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (requestsReport.length === 0) { %>
+                <tr><td colspan="4" style="text-align: center; color: var(--text-muted);">No requests recorded.</td></tr>
+              <% } else { %>
+                <% requestsReport.forEach(r => { %>
+                  <tr>
+                    <td>
+                      <% if (r.urgency === 'EMERGENCY') { %>
+                        <span class="badge badge-red">EMERGENCY</span>
+                      <% } else if (r.urgency === 'URGENT') { %>
+                        <span class="badge badge-amber">URGENT</span>
+                      <% } else { %>
+                        <span class="badge badge-blue">ROUTINE</span>
+                      <% } %>
+                    </td>
+                    <td>
+                      <% if (r.status === 'FULFILLED') { %>
+                        <span class="badge badge-green">FULFILLED</span>
+                      <% } else if (r.status === 'APPROVED') { %>
+                        <span class="badge badge-blue">APPROVED</span>
+                      <% } else if (r.status === 'PENDING') { %>
+                        <span class="badge badge-amber">PENDING</span>
+                      <% } else { %>
+                        <span class="badge badge-gray"><%= r.status %></span>
+                      <% } %>
+                    </td>
+                    <td><%= r.total_requests %></td>
+                    <td><strong><%= r.total_units_demanded %> unit(s)</strong></td>
+                  </tr>
+                <% }) %>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Report 4: Expired and Near-Expiry Inventory Batches (Subquery) -->
+      <div class="card">
+        <div class="card-header">
+          <h3>4. Batches Expired or Expiring in &le;14 Days</h3>
+          <span class="badge badge-red">SQL Concept: Nested Subquery with IN (SELECT ...)</span>
+        </div>
+        <div class="card-body" style="padding-bottom: 0.5rem;">
+          <details style="margin-bottom: 1rem; font-size: 0.8rem; background-color: #f8fafc; padding: 0.5rem; border-radius: 4px; border: 1px solid var(--border-color);">
+            <summary style="cursor: pointer; font-weight: 600; color: var(--navy);">View SQL Query</summary>
+            <pre style="margin-top: 0.5rem; overflow-x: auto; color: var(--navy);"><code>SELECT b.batch_code, b.blood_group, b.units_available, b.expiry_date, b.status,
+       DATEDIFF(b.expiry_date, CURDATE()) AS days_left,
+       d.donation_code, dnr.full_name AS donor_name
+FROM blood_inventory_batches b
+JOIN donations d ON b.donation_id = d.donation_id
+JOIN donors dnr ON d.donor_id = dnr.donor_id
+WHERE b.batch_id IN (
+  SELECT batch_id 
+  FROM blood_inventory_batches 
+  WHERE expiry_date <= DATE_ADD(CURDATE(), INTERVAL 14 DAY)
+)
+ORDER BY b.expiry_date ASC;</code></pre>
+          </details>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Batch Code</th>
+                <th>Blood Group</th>
+                <th>Available</th>
+                <th>Expiry Date</th>
+                <th>Days Remaining</th>
+                <th>Current Status</th>
+                <th>Donor Lineage</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (expiryReport.length === 0) { %>
+                <tr><td colspan="7" style="text-align: center; color: var(--text-muted);">No expired or near-expiry batches.</td></tr>
+              <% } else { %>
+                <% expiryReport.forEach(r => { %>
+                  <tr>
+                    <td><strong><%= r.batch_code %></strong></td>
+                    <td><span class="blood-badge"><%= r.blood_group %></span></td>
+                    <td><%= r.units_available %> unit(s)</td>
+                    <td><%= r.expiry_date %></td>
+                    <td>
+                      <% if (r.days_left <= 0) { %>
+                        <span class="badge badge-red">EXPIRED</span>
+                      <% } else { %>
+                        <span class="badge badge-amber"><%= r.days_left %> days remaining</span>
+                      <% } %>
+                    </td>
+                    <td>
+                      <span class="badge badge-<%= r.status === 'AVAILABLE' ? 'green' : (r.status === 'EXPIRED' ? 'red' : 'gray') %>">
+                        <%= r.status %>
+                      </span>
+                    </td>
+                    <td><%= r.donor_name %> (<%= r.donation_code %>)</td>
+                  </tr>
+                <% }) %>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Report 5: Issued Units & Fulfilled Requests by Hospital -->
+      <div class="card">
+        <div class="card-header">
+          <h3>5. Issued Units and Fulfilled Requisitions by Hospital</h3>
+          <span class="badge badge-green">SQL Concept: 3-Table INNER JOIN &amp; COUNT(DISTINCT)</span>
+        </div>
+        <div class="card-body" style="padding-bottom: 0.5rem;">
+          <details style="margin-bottom: 1rem; font-size: 0.8rem; background-color: #f8fafc; padding: 0.5rem; border-radius: 4px; border: 1px solid var(--border-color);">
+            <summary style="cursor: pointer; font-weight: 600; color: var(--navy);">View SQL Query</summary>
+            <pre style="margin-top: 0.5rem; overflow-x: auto; color: var(--navy);"><code>SELECT h.hospital_name, h.city,
+       COUNT(DISTINCT r.request_id) AS fulfilled_request_count,
+       COUNT(bi.issue_id) AS total_issue_transactions,
+       COALESCE(SUM(bi.units_issued), 0) AS total_units_received
+FROM hospitals h
+JOIN blood_requests r ON h.hospital_id = r.hospital_id
+JOIN blood_issues bi ON r.request_id = bi.request_id
+GROUP BY h.hospital_id, h.hospital_name, h.city
+ORDER BY total_units_received DESC;</code></pre>
+          </details>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Hospital Name</th>
+                <th>City</th>
+                <th>Fulfilled Requests</th>
+                <th>Issue Transactions</th>
+                <th>Total Units Received</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (issuesReport.length === 0) { %>
+                <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No blood issues recorded yet.</td></tr>
+              <% } else { %>
+                <% issuesReport.forEach(r => { %>
+                  <tr>
+                    <td><strong><%= r.hospital_name %></strong></td>
+                    <td><%= r.city %></td>
+                    <td><%= r.fulfilled_request_count %> request(s)</td>
+                    <td><%= r.total_issue_transactions %> event(s)</td>
+                    <td>
+                      <span class="badge badge-green" style="font-size: 0.85rem;">
+                        <%= r.total_units_received %> unit(s)
+                      </span>
+                    </td>
+                  </tr>
+                <% }) %>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+<%- include('partials/footer') %>

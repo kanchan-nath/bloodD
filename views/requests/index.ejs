@@ -1,0 +1,158 @@
+<%- include('../partials/header') %>
+
+<div class="app-container">
+  <%- include('../partials/sidebar') %>
+
+  <main class="main-wrapper">
+    <header class="top-header">
+      <div class="page-title">
+        <h2>Hospital Blood Requests & Distribution</h2>
+        <p>Review clinical requisitions, approve verified requests, and execute transactional stock issues</p>
+      </div>
+      <div class="header-actions">
+        <a href="/requests/new" class="btn btn-primary btn-sm">+ Create Blood Request</a>
+      </div>
+    </header>
+
+    <div class="content-body">
+      <%- include('../partials/safety_banner') %>
+      <%- include('../partials/flash') %>
+
+      <!-- Filter Bar -->
+      <form action="/requests" method="GET" class="filter-bar">
+        <input 
+          type="text" 
+          name="q" 
+          class="form-control search-input" 
+          placeholder="🔍 Search request code (e.g. REQ-2026-0001), hospital name, patient ref..." 
+          value="<%= q %>"
+          data-table-search="requests-table"
+        >
+
+        <select name="hospital_id" class="form-control" style="width: auto; min-width: 170px;" onchange="this.form.submit()">
+          <option value="">All Hospitals</option>
+          <% hospitals.forEach(h => { %>
+            <option value="<%= h.hospital_id %>" <%= selectedHospital == h.hospital_id ? 'selected' : '' %>>
+              <%= h.hospital_name %>
+            </option>
+          <% }) %>
+        </select>
+
+        <select name="blood_group" class="form-control" style="width: auto; min-width: 140px;" onchange="this.form.submit()">
+          <option value="">All Blood Groups</option>
+          <% validBloodGroups.forEach(bg => { %>
+            <option value="<%= bg %>" <%= selectedBloodGroup === bg ? 'selected' : '' %>><%= bg %></option>
+          <% }) %>
+        </select>
+
+        <select name="urgency" class="form-control" style="width: auto; min-width: 140px;" onchange="this.form.submit()">
+          <option value="">All Urgencies</option>
+          <% validUrgencies.forEach(ug => { %>
+            <option value="<%= ug %>" <%= selectedUrgency === ug ? 'selected' : '' %>><%= ug %></option>
+          <% }) %>
+        </select>
+
+        <select name="status" class="form-control" style="width: auto; min-width: 140px;" onchange="this.form.submit()">
+          <option value="">All Statuses</option>
+          <% validStatuses.forEach(st => { %>
+            <option value="<%= st %>" <%= selectedStatus === st ? 'selected' : '' %>><%= st %></option>
+          <% }) %>
+        </select>
+
+        <button type="submit" class="btn btn-navy btn-sm">Filter</button>
+        <% if (q || selectedHospital || selectedBloodGroup || selectedUrgency || selectedStatus) { %>
+          <a href="/requests" class="btn btn-secondary btn-sm">Reset</a>
+        <% } %>
+      </form>
+
+      <!-- Requests Table -->
+      <div class="card">
+        <div class="card-header">
+          <h3>📋 Hospital Blood Requests (<%= requests.length %> Listed)</h3>
+          <span style="font-size: 0.8rem; color: var(--text-muted);">
+            Ordered with EMERGENCY &amp; URGENT prioritized at the top
+          </span>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table" id="requests-table">
+            <thead>
+              <tr>
+                <th>Request Code</th>
+                <th>Hospital</th>
+                <th>Group</th>
+                <th>Units Req / Issued</th>
+                <th>Urgency</th>
+                <th>Status</th>
+                <th>Requested At</th>
+                <th>Required By</th>
+                <th>Handled By</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (requests.length === 0) { %>
+                <tr>
+                  <td colspan="10">
+                    <div class="empty-state">
+                      <div class="empty-state-icon">📋</div>
+                      <h4>No Requests Found</h4>
+                      <p>No hospital requisitions matched your current filters.</p>
+                      <a href="/requests/new" class="btn btn-primary btn-sm">+ Create Request</a>
+                    </div>
+                  </td>
+                </tr>
+              <% } else { %>
+                <% requests.forEach(r => { %>
+                  <tr>
+                    <td><strong><%= r.request_code %></strong></td>
+                    <td>
+                      <span style="font-weight: 600; color: var(--navy);"><%= r.hospital_name %></span>
+                      <div style="font-size: 0.75rem; color: var(--text-muted);"><%= r.hospital_code %> &bull; <%= r.hospital_city %></div>
+                    </td>
+                    <td><span class="blood-badge"><%= r.blood_group %></span></td>
+                    <td>
+                      <strong><%= r.units_requested %></strong> req
+                      <% if (r.total_units_issued > 0) { %>
+                        <span style="color: var(--success); font-size: 0.8rem;">(<%= r.total_units_issued %> issued)</span>
+                      <% } %>
+                    </td>
+                    <td>
+                      <% if (r.urgency === 'EMERGENCY') { %>
+                        <span class="badge badge-red">🚨 EMERGENCY</span>
+                      <% } else if (r.urgency === 'URGENT') { %>
+                        <span class="badge badge-amber">⚡ URGENT</span>
+                      <% } else { %>
+                        <span class="badge badge-blue">ROUTINE</span>
+                      <% } %>
+                    </td>
+                    <td>
+                      <% if (r.status === 'FULFILLED') { %>
+                        <span class="badge badge-green">FULFILLED</span>
+                      <% } else if (r.status === 'APPROVED') { %>
+                        <span class="badge badge-blue">APPROVED</span>
+                      <% } else if (r.status === 'PENDING') { %>
+                        <span class="badge badge-amber">PENDING</span>
+                      <% } else if (r.status === 'REJECTED') { %>
+                        <span class="badge badge-red">REJECTED</span>
+                      <% } else { %>
+                        <span class="badge badge-gray"><%= r.status %></span>
+                      <% } %>
+                    </td>
+                    <td style="font-size: 0.8rem;"><%= r.requested_at %></td>
+                    <td style="font-size: 0.8rem;"><%= r.required_by || '-' %></td>
+                    <td style="font-size: 0.8rem;"><%= r.handled_by_name || 'Pending' %></td>
+                    <td>
+                      <a href="/requests/<%= r.request_id %>" class="btn btn-secondary btn-sm">
+                        <%= r.status === 'APPROVED' ? '⚡ Issue Stock' : 'Inspect' %>
+                      </a>
+                    </td>
+                  </tr>
+                <% }) %>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+<%- include('../partials/footer') %>
