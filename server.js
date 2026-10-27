@@ -129,8 +129,7 @@ app.get('/', (req, res) => {
 
 // 404 Handler
 app.use((req, res) => {
-  res.status(404).render('partials/header', { title: '404 Not Found' });
-  res.send(`
+  res.status(404).send(`
     <div style="min-height: 80vh; display: flex; align-items: center; justify-content: center; text-align: center; font-family: sans-serif;">
       <div>
         <h1 style="font-size: 3rem; color: #dc2626; margin-bottom: 0.5rem;">404</h1>
@@ -145,6 +144,9 @@ app.use((req, res) => {
 // Global Error Handler
 app.use((err, req, res, next) => {
   console.error('[Unhandled Server Error]', err);
+  if (res.headersSent) {
+    return next(err);
+  }
   res.status(500).send(`
     <div style="font-family: sans-serif; padding: 2rem; max-width: 600px; margin: 40px auto; border: 1px solid #fca5a5; background-color: #fef2f2; border-radius: 8px;">
       <h2 style="color: #991b1b;">500 Internal Server Error</h2>
