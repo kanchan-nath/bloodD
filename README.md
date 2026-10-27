@@ -136,51 +136,165 @@ erDiagram
 
 ---
 
-## 🚀 Step-by-Step Setup & Running Guide
+## 🪟 Windows Setup Guide (PowerShell from Scratch)
 
-### 1. Import Database with MySQL Workbench
-1. Open **MySQL Workbench** and connect to your local MySQL 8 server.
-2. Go to **File → Open SQL Script...** and choose `blood_bank_management.sql`.
-3. Click the ⚡ **Execute** button to run the script.
-4. Refresh the **Schemas** pane on the left: the `blood_bank_demo` database will appear with all 8 tables, seed records, and the summary view.
+Follow this complete step-by-step walkthrough on a Windows laptop using **PowerShell (Run as Administrator)**.
 
-*(Alternative via terminal CLI)*:
-```bash
-mysql -u root -p < blood_bank_management.sql
+### Step 1: Install Prerequisites via PowerShell
+
+Open **PowerShell as Administrator** (Right-click Start menu → **Terminal (Admin)** or **Windows PowerShell (Admin)**).
+
+Install Node.js, Git, and MySQL using Windows Package Manager (`winget`):
+
+```powershell
+# 1. Install Node.js LTS
+winget install OpenJS.NodeJS.LTS -e --accept-source-agreements --accept-package-agreements
+
+# 2. Install Git
+winget install Git.Git -e --accept-source-agreements --accept-package-agreements
+
+# 3. Install MySQL Server 8.0+
+winget install Oracle.MySQL -e --accept-source-agreements --accept-package-agreements
 ```
 
-### 2. Configure Environment Variables (`.env`)
-Copy `.env.example` to `.env`:
-```bash
-cp .env.example .env
+> **Alternative Manual Installers (if winget is unavailable):**
+> - **Node.js:** [https://nodejs.org](https://nodejs.org) (Download Windows LTS `.msi`)
+> - **Git:** [https://git-scm.com](https://git-scm.com) (Download 64-bit Git for Windows)
+> - **MySQL:** [https://dev.mysql.com/downloads/installer/](https://dev.mysql.com/downloads/installer/) (Download MySQL Installer, install *MySQL Server 8.0*, and set a root password during setup)
+
+---
+
+### Step 2: Add MySQL to PowerShell PATH (If Needed)
+
+If PowerShell displays `'mysql' is not recognized as the name of a cmdlet`, add MySQL's `bin` folder to your Path:
+
+```powershell
+# Add MySQL to PATH for the current PowerShell session:
+$env:Path += ";C:\Program Files\MySQL\MySQL Server 8.0\bin"
+
+# (Optional) Permanently add to System Environment Variables:
+[Environment]::SetEnvironmentVariable("Path", $env:Path + ";C:\Program Files\MySQL\MySQL Server 8.0\bin", [EnvironmentVariableTarget]::Machine)
 ```
-Edit `.env` to match your local configuration:
+
+Restart PowerShell or open a new terminal tab to verify:
+```powershell
+mysql --version
+node -v
+npm -v
+```
+
+---
+
+### Step 3: Verify and Start the MySQL Windows Service
+
+Ensure the MySQL background service is active in PowerShell:
+
+```powershell
+# Check service status
+Get-Service MySQL80
+
+# If Status is Stopped, start it:
+Start-Service MySQL80
+```
+*(Or run `net start MySQL80`)*
+
+---
+
+### Step 4: Clone the Project from GitHub
+
+In your PowerShell window, navigate to your desired directory (e.g. `C:\Users\<YourUser>\Documents` or `C:\Projects`) and clone the repository:
+
+```powershell
+# Clone the repository
+git clone https://github.com/kanchan-nath/bloodD.git
+
+# Enter project directory
+cd bloodD
+```
+
+*(Alternatively, download the ZIP from GitHub, extract it, and `cd` into the extracted folder in PowerShell).*
+
+---
+
+### Step 5: Import the Database (`blood_bank_management.sql`)
+
+> ⚠️ **Important PowerShell Note:** PowerShell does NOT support standard `<` input redirection (it throws `The '<' operator is reserved for future use`).
+> Use either of the two PowerShell commands below:
+
+```powershell
+# Method A (Recommended in PowerShell):
+Get-Content blood_bank_management.sql -Raw | mysql -u root -p
+
+# Method B (Using MySQL source command):
+mysql -u root -p -e "source blood_bank_management.sql"
+```
+
+Type your MySQL root password when prompted and press Enter.
+
+To verify that the database and all 10 tables were imported successfully:
+```powershell
+mysql -u root -p -e "SHOW DATABASES; USE blood_bank_demo; SHOW TABLES;"
+```
+
+---
+
+### Step 6: Create and Configure the `.env` File
+
+Create your local `.env` configuration file from `.env.example`:
+
+```powershell
+# Copy example configuration to .env
+Copy-Item .env.example .env
+
+# Open in Notepad to edit credentials
+notepad .env
+```
+
+Ensure `.env` contains your correct local credentials:
 ```env
 PORT=3000
-SESSION_SECRET=a-secure-random-secret-key-for-session-encryption
+SESSION_SECRET=blood-bank-college-dbms-session-secret-key-2026
 DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_NAME=blood_bank_demo
 DB_USER=root
-DB_PASSWORD=your_mysql_root_password
+DB_PASSWORD=YourMySQLRootPassword
 ```
+*(Save and close Notepad).*
 
-### 3. Install Dependencies
-```bash
+---
+
+### Step 7: Install Node.js Dependencies
+
+In PowerShell within the `bloodD` directory:
+
+```powershell
 npm install
 ```
 
-### 4. Run Automated Test Suites
-Run the built-in Node test runner to verify crypto hashing, database pool, views, and FIFO ordering:
-```bash
+---
+
+### Step 8: Run Automated Test Suites
+
+Run the built-in test runner to ensure hashing, relational integrity, queries, and connection pool are healthy:
+
+```powershell
 npm test
 ```
+All 7 tests should report `pass 7`.
 
-### 5. Launch the Application
-```bash
+---
+
+### Step 9: Start the Application
+
+To start the server:
+
+```powershell
 npm start
 ```
-The terminal will display:
+*(Or run in watch mode: `npm run dev`)*
+
+The terminal will confirm:
 ```text
 ========================================================================
 🩸 BLOOD BANK MANAGEMENT SYSTEM — COLLEGE DBMS PROJECT
@@ -188,8 +302,22 @@ The terminal will display:
 🚀 Server running at: http://localhost:3000
 💾 Database: blood_bank_demo @ 127.0.0.1:3306
 ========================================================================
+[DB] Successfully connected to MySQL at 127.0.0.1:3306, Database: blood_bank_demo
 ```
+
 Open your browser and navigate to: **`http://localhost:3000`**
+
+---
+
+### 🛠️ Windows PowerShell Troubleshooting Checklist
+
+| Issue | Cause | PowerShell Fix |
+| :--- | :--- | :--- |
+| **`Execution of scripts is disabled on this system`** | PowerShell default ExecutionPolicy restricts scripts | Run: `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser` |
+| **`The '<' operator is reserved for future use`** | Tried `mysql < file.sql` in PowerShell | Use: `Get-Content blood_bank_management.sql -Raw \| mysql -u root -p` |
+| **`connect ECONNREFUSED 127.0.0.1:3306`** | MySQL Windows service is stopped | Run: `Start-Service MySQL80` or `net start MySQL80` |
+| **`Access denied for user 'root'@'localhost'`** | Incorrect password in `.env` | Update `DB_PASSWORD` in `.env` to match your MySQL root password |
+| **`EADDRINUSE: address already in use :::3000`** | Another process is using port 3000 | Find & kill process: `Get-Process -Id (Get-NetTCPConnection -LocalPort 3000).OwningProcess \| Stop-Process -Force` |
 
 ---
 
