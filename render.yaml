@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: blood-bank-management
+    env: node
+    plan: free
+    region: singapore # Matches TiDB Cloud ap-southeast-1 region for low-latency queries
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: DB_NAME
+        value: blood_bank_demo
+      - key: DB_SSL
+        value: "true"
+      - key: TRUST_PROXY
+        value: "true"
+

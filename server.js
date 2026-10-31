@@ -26,6 +26,11 @@ const reportRoutes = require('./routes/reports');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust reverse proxy (e.g. Render, Heroku) for HTTPS headers & rate limiter client IP
+if (process.env.NODE_ENV === 'production' || process.env.TRUST_PROXY === 'true') {
+  app.set('trust proxy', 1);
+}
+
 // Security headers with Helmet
 app.use(
   helmet({
@@ -73,7 +78,7 @@ app.use(
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: false, // Set to true only behind HTTPS in production
+      secure: process.env.NODE_ENV === 'production', // true behind HTTPS in production
       maxAge: 1000 * 60 * 60 * 24, // 24 hours
       sameSite: 'lax'
     }
@@ -119,6 +124,24 @@ app.use('/inventory', inventoryRoutes);
 app.use('/requests', requestRoutes);
 app.use('/reports', reportRoutes);
 
+// Health check endpoint for Render monitoring and uptime checks
+app.get('/healthz', async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT 1 AS alive');
+    res.status(200).json({
+      status: 'ok',
+      uptime: Math.floor(process.uptime()),
+      timestamp: new Date().toISOString(),
+      database: 'connected'
+    });
+  } catch (err) {
+    res.status(503).json({
+      status: 'unhealthy',
+      error: err.message
+    });
+  }
+});
+
 // Home route redirect
 app.get('/', (req, res) => {
   if (req.session && req.session.user) {
@@ -159,10 +182,10 @@ app.use((err, req, res, next) => {
 // Start Server
 if (require.main === module) {
   testConnection().then((connected) => {
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
       console.log(`
 ========================================================================
-🩸 BLOOD BANK MANAGEMENT SYSTEM — COLLEGE DBMS PROJECT
+🩸 BLOOD BANK MANAGEMENT SYSTEM
 ------------------------------------------------------------------------
 🚀 Server running at: http://localhost:${PORT}
 💾 Database: ${dbConfig.database} @ ${dbConfig.host}:${dbConfig.port}
@@ -172,6 +195,23 @@ if (require.main === module) {
 ========================================================================
       `);
     });
+
+    // Graceful shutdown on SIGTERM / SIGINT for zero-downtime deploys
+    const gracefulShutdown = (signal) => {
+      console.log(`[Server] Received ${signal}. Closing HTTP server and database pool...`);
+      server.close(async () => {
+        try {
+          await pool.end();
+          console.log('[Server] Database pool closed successfully.');
+        } catch (err) {
+          console.error('[Server Error during shutdown]', err);
+        }
+        process.exit(0);
+      });
+    };
+
+    process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+    process.on('SIGINT', () => gracefulShutdown('SIGINT'));
   });
 }
 

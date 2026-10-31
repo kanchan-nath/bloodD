@@ -63,3 +63,19 @@ test('FIFO stock issue query returns batches sorted by earliest expiry first', a
     assert.ok(curDate <= nextDate, 'Batches must be strictly sorted by earliest expiry date first');
   }
 });
+
+test('Healthcheck endpoint /healthz responds with database connected', async () => {
+  const app = require('../server');
+  const server = app.listen(0);
+  const { port } = server.address();
+
+  try {
+    const res = await fetch(`http://127.0.0.1:${port}/healthz`);
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.status, 'ok');
+    assert.equal(data.database, 'connected');
+  } finally {
+    server.close();
+  }
+});
